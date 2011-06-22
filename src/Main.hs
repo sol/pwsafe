@@ -6,6 +6,7 @@ import System.Environment (getArgs)
 import System.Process
 
 import Database
+import Util (nameFromUrl)
 
 help :: IO ()
 help = fail "Not yet implemented!"
@@ -30,10 +31,10 @@ query kw = do
       xclip (entryPassword x)
     _   -> putStrLn "ambiguous"
   where
-    filterDB db = filter (\e -> kw `isInfixOf` entryUrl e) db
+    filterDB db = filter (\e -> kw `isInfixOf` entryName e) db
 
     xclip :: String -> IO ()
-    xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
+    xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
     open :: String -> IO ()
     open url = rawSystem "gnome-open" [url] >> return ()
@@ -42,7 +43,7 @@ add :: String -> IO ()
 add url_ = do
   login_ <- genLogin
   password_ <- genPassword
-  addEntry $ Entry {entryLogin = login_, entryPassword = password_, entryUrl = url_}
+  addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = login_, entryPassword = password_, entryUrl = url_}
   where
     genLogin :: IO String
     genLogin = fmap init $ readProcess "pwgen" ["-s"] ""
