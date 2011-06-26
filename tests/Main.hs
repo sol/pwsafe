@@ -23,3 +23,10 @@ case_getOptions_dbfile = do
 
   opts <- Options.get ["--dbfile", "mydb"]
   "mydb" @=? Options.databaseFile opts
+
+case_getOptions_precedence = do
+  opts <- Options.get ["--query", "foo", "--help", "--add", "baz"]
+  Add "baz" @=? Options.mode opts
+
+  opts <- Options.get ["--add", "foo", "--help", "--query", "baz"]
+  Query "baz" @=? Options.mode opts
