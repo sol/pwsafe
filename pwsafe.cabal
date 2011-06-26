@@ -13,4 +13,4 @@ executable pwsafe
   ghc-options:    -Wall
   hs-source-dirs: src
   main-is:        Main.hs
-  build-depends:  base, process, filepath, network, hsini >= 0.1.999
+  build-depends:  base, process, filepath, network, containers, directory, hsini >= 0.1.999

@@ -1,7 +1,5 @@
 module Main (main) where
 
-import Data.List
-
 import System.Environment (getArgs)
 import System.Process
 
@@ -24,17 +22,14 @@ main = do
 query :: String -> Options -> IO ()
 query kw opts = do
   db <- Database.readDB $ Options.databaseFile opts
-  case filterDB db of
-    []  -> putStrLn "no match"
-    [x] -> do
+  case Database.lookupEntry db kw of
+    Nothing -> putStrLn "no match"
+    Just x  -> do
       putStrLn $ entryUrl x
       open (entryUrl x)
       xclip (entryLogin x)
       xclip (entryPassword x)
-    _   -> putStrLn "ambiguous"
   where
-    filterDB db = filter (\e -> kw `isInfixOf` entryName e) db
-
     xclip :: String -> IO ()
     xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
@@ -56,4 +51,5 @@ add url_ opts = do
     addEntry :: Entry -> IO ()
     addEntry entry = do
       db <- Database.readDB $ Options.databaseFile opts
-      Database.writeDB (Options.databaseFile opts) (entry : db)
+      _ <- Database.addEntry db entry
+      return ()
