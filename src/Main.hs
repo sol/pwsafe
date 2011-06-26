@@ -15,9 +15,16 @@ main :: IO ()
 main = do
   opts <- getArgs >>= Options.get
   case Options.mode opts of
-    Query s -> query s opts
-    Add url -> add url opts
     Help    -> Options.printHelp
+    Add url -> add url opts
+    Query s -> query s opts
+    List    -> listEntries opts
+
+
+listEntries :: Options -> IO ()
+listEntries opts = do
+  db <- Database.readDB $ Options.databaseFile opts
+  mapM_ putStrLn $ Database.entrieNames db
 
 query :: String -> Options -> IO ()
 query kw opts = do

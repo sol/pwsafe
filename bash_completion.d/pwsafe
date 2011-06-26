@@ -9,7 +9,7 @@ _pwsafe()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts='--help -q --query -a --add --dbfile'
+    opts='--help -a --add -q --query --list --dbfile'
 
     case "${prev}" in
 

@@ -1,4 +1,4 @@
-module Database (Database, readDB, addEntry, Entry(..), lookupEntry) where
+module Database (Database, readDB, addEntry, Entry(..), lookupEntry, entrieNames) where
 
 import Control.Monad (when)
 import Control.Exception (evaluate)
@@ -31,6 +31,9 @@ data Database = Database {
 
 lookupEntry :: Database -> String -> Maybe Entry
 lookupEntry db s = Map.lookup s $ entries db
+
+entrieNames :: Database -> [String]
+entrieNames = Map.keys . entries
 
 readDB :: FilePath -> IO Database
 readDB filename = do

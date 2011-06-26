@@ -7,7 +7,7 @@ import System.FilePath (joinPath)
 import System.Console.GetOpt
 import Text.Printf (printf)
 
-data Mode = Query String | Add String | Help
+data Mode = Help | Add String | Query String | List
   deriving (Eq, Show)
 
 data Options = Options {
@@ -26,6 +26,8 @@ options = [
     Option []     ["help"]    (NoArg  (\  opts -> opts {mode = Help}))              "display this help and exit"
   , Option ['a']  ["add"]     (ReqArg (\s opts -> opts { mode = Add s })   "URL")   ""
   , Option ['q']  ["query"]   (ReqArg (\s opts -> opts { mode = Query s }) "TERM")  ""
+  , Option []     ["list"]    (NoArg  (\  opts -> opts { mode = List}))             ""
+
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  ""
   ]
 
