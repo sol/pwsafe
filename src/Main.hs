@@ -5,7 +5,9 @@ import Data.List
 import System.Environment (getArgs)
 import System.Process
 
-import Database
+import           Database (Entry(..))
+import qualified Database
+
 import Util (nameFromUrl)
 
 import qualified Options
@@ -21,7 +23,7 @@ main = do
 
 query :: String -> Options -> IO ()
 query kw opts = do
-  db <- readDB $ Options.databaseFile opts
+  db <- Database.readDB $ Options.databaseFile opts
   case filterDB db of
     []  -> putStrLn "no match"
     [x] -> do
@@ -53,5 +55,5 @@ add url_ opts = do
 
     addEntry :: Entry -> IO ()
     addEntry entry = do
-      db <- readDB $ Options.databaseFile opts
-      writeDB (Options.databaseFile opts) (entry : db)
+      db <- Database.readDB $ Options.databaseFile opts
+      Database.writeDB (Options.databaseFile opts) (entry : db)
