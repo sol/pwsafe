@@ -8,16 +8,16 @@ import System.Process
 import Database
 import Util (nameFromUrl)
 
-help :: IO ()
-help = fail "Not yet implemented!"
+import qualified Options
+import           Options (Mode(..))
 
 main :: IO ()
 main = do
-  args <- getArgs
-  case args of
-    ["query", kw] -> query kw
-    ["add", url]  -> add url
-    _ -> help
+  opts <- getArgs >>= Options.get
+  case Options.mode opts of
+    Query s -> query s
+    Add url -> add url
+    Help    -> Options.printHelp
 
 query :: String -> IO ()
 query kw = do

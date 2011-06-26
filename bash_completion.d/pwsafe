@@ -9,7 +9,7 @@ _pwsafe()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts='add query'
+    opts='--help -q --query -a --add'
 
     if [ "$COMP_CWORD" -gt 1 ]; then
         return 0
