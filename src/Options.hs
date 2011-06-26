@@ -2,6 +2,8 @@ module Options where
 
 import Control.Monad
 import System.Exit
+import System.Environment (getEnv)
+import System.FilePath (joinPath)
 import System.Console.GetOpt
 import Text.Printf (printf)
 
@@ -10,11 +12,13 @@ data Mode = Query String | Add String | Help
 
 data Options = Options {
     mode          :: Mode
+  , databaseFile  :: FilePath
   } deriving Show
 
 defaultOptions :: Options
 defaultOptions  = Options {
     mode          = Help
+  , databaseFile  = ""
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -22,12 +26,23 @@ options = [
     Option []     ["help"]    (NoArg  (\  opts -> opts {mode = Help}))              "display this help and exit"
   , Option ['a']  ["add"]     (ReqArg (\s opts -> opts { mode = Add s })   "URL")   ""
   , Option ['q']  ["query"]   (ReqArg (\s opts -> opts { mode = Query s }) "TERM")  ""
+  , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  ""
   ]
+
+defaultDatabaseFile :: IO String
+defaultDatabaseFile = do
+  home <- getEnv "HOME"
+  return $ joinPath [home, ".pwsafe", "db"]
 
 get :: [String] -> IO Options
 get args = do
   let (opts_, files, errors) = getOpt Permute options args
-  let opts = foldl (flip id) defaultOptions opts_
+  let opts__ = foldl (flip id) defaultOptions opts_
+  opts <- case databaseFile opts__ of
+    "" -> do
+      db <- defaultDatabaseFile
+      return opts__ {databaseFile = db}
+    _  -> return opts__
 
   when ((not . null) errors)
     (tryHelp $ head errors)

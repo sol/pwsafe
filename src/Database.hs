@@ -5,8 +5,6 @@ import Control.Exception (evaluate)
 
 import Text.Printf (printf)
 
-import System.Environment (getEnv)
-import System.FilePath (joinPath)
 import System.IO (hGetContents, hPutStrLn, hFlush, hClose)
 import System.Process
 import System.Exit
@@ -21,14 +19,8 @@ data Entry = Entry {
 , entryUrl      :: String
 } deriving Show
 
-getDatabasePath :: IO String
-getDatabasePath = do
-  home <- getEnv "HOME"
-  return $ joinPath [home, ".pwsafe", "db"]
-
-readDB :: IO [Entry]
-readDB = do
-  filename <- getDatabasePath
+readDB :: FilePath -> IO [Entry]
+readDB filename = do
   (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
   output <- hGetContents outh
   _ <- evaluate $ length output
@@ -47,9 +39,8 @@ readDB = do
               Just x -> x
 
 
-writeDB :: [Entry] -> IO ()
-writeDB db = do
-  filename <- getDatabasePath
+writeDB :: FilePath -> [Entry] -> IO ()
+writeDB filename db = do
   (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["-e", "-a", "--default-recipient-self", "--output", filename]) {std_in = CreatePipe}
   mapM_ (hPutStrLn inh . renderEntry) db
   hFlush inh

@@ -9,19 +9,19 @@ import Database
 import Util (nameFromUrl)
 
 import qualified Options
-import           Options (Mode(..))
+import           Options (Options, Mode(..))
 
 main :: IO ()
 main = do
   opts <- getArgs >>= Options.get
   case Options.mode opts of
-    Query s -> query s
-    Add url -> add url
+    Query s -> query s opts
+    Add url -> add url opts
     Help    -> Options.printHelp
 
-query :: String -> IO ()
-query kw = do
-  db <- readDB
+query :: String -> Options -> IO ()
+query kw opts = do
+  db <- readDB $ Options.databaseFile opts
   case filterDB db of
     []  -> putStrLn "no match"
     [x] -> do
@@ -39,8 +39,8 @@ query kw = do
     open :: String -> IO ()
     open url = rawSystem "gnome-open" [url] >> return ()
 
-add :: String -> IO ()
-add url_ = do
+add :: String -> Options -> IO ()
+add url_ opts = do
   login_ <- genLogin
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = login_, entryPassword = password_, entryUrl = url_}
@@ -53,5 +53,5 @@ add url_ = do
 
     addEntry :: Entry -> IO ()
     addEntry entry = do
-      db <- readDB
-      writeDB $ entry : db
+      db <- readDB $ Options.databaseFile opts
+      writeDB (Options.databaseFile opts) (entry : db)

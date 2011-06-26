@@ -9,12 +9,24 @@ _pwsafe()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    opts='--help -q --query -a --add'
+    opts='--help -q --query -a --add --dbfile'
 
-    if [ "$COMP_CWORD" -gt 1 ]; then
-        return 0
-    else
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-    fi
+    case "${prev}" in
+
+        # requires file argument
+	--dbfile)
+            _filedir
+            return 0
+            ;;
+
+        # requires some argument
+        -q|--query|-a|--add)
+            return 0
+            ;;
+
+        *)
+            COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            ;;
+    esac
 }
 complete -F _pwsafe pwsafe
