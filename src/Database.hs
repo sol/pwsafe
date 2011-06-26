@@ -72,7 +72,7 @@ addEntry db entry = do
   let f = fileName db
   renameFile f $ f ++ ".old"
 
-  (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["-e", "-a", "--default-recipient-self", "--output", f]) {std_in = CreatePipe}
+  (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["--batch", "-e", "-a", "--default-recipient-self", "--output", f]) {std_in = CreatePipe}
   hPutStr inh source_
   hFlush inh
   hClose inh
