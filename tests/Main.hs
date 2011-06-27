@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
-import Test.Framework.TH (defaultMainGenerator)
+import Test.Framework
+import Test.Framework.TH (testGroupGenerator)
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
 
@@ -9,7 +10,11 @@ import Test.HUnit
 import qualified Options
 import           Options (Mode(..))
 
-main = $(defaultMainGenerator)
+import qualified LockTest
+
+main = defaultMain [tests, LockTest.tests]
+
+tests = $(testGroupGenerator)
 
 case_getOptions_query = do
   opts <- Options.get ["--query", "foobar"]

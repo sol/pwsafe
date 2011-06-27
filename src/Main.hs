@@ -2,25 +2,30 @@ module Main (main) where
 
 import System.Environment (getArgs)
 import System.Process
+import Control.Exception (finally)
 
 import           Control.DeepSeq (deepseq)
 
 import           Database (Entry(..))
 import qualified Database
 
-import Util (nameFromUrl)
+import           Util (nameFromUrl, ifM)
 
 import qualified Options
 import           Options (Options, Mode(..))
+
+import qualified Lock
 
 main :: IO ()
 main = do
   opts <- getArgs >>= Options.get
   case Options.mode opts of
     Help    -> Options.printHelp
-    Add url -> add url opts
+    Add url -> withLock $ add url opts
     Query s -> query s opts
     List    -> listEntries opts
+  where
+    withLock action = ifM Lock.acquire (action `finally` Lock.release) (fail "Acquiring lock failed!")
 
 
 listEntries :: Options -> IO ()
