@@ -64,5 +64,6 @@ add url_ opts = do
       -- gets an error before he has to enter his password.
       entry `deepseq` do
         db <- Database.readDB $ Options.databaseFile opts
-        _ <- Database.addEntry db entry
-        return ()
+        case Database.addEntry db entry of
+          Left err  -> fail err
+          Right db_ -> Database.save db_

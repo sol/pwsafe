@@ -1,4 +1,4 @@
-module Database (Database, readDB, addEntry, Entry(..), lookupEntry, entrieNames) where
+module Database (Database, readDB, save, addEntry, Entry(..), lookupEntry, entrieNames) where
 
 import           Control.Monad (when)
 import           Control.DeepSeq
@@ -37,6 +37,21 @@ lookupEntry db s = Map.lookup s $ entries db
 entrieNames :: Database -> [String]
 entrieNames = Map.keys . entries
 
+addEntry :: Database -> Entry -> Either String Database
+addEntry db entry =
+  case Map.member name entries_ of
+    True  -> Left $ printf "Entry with name \"%s\" already exists!" name
+    False -> Right db {entries = Map.insert name entry entries_, source = source_}
+  where
+    name      = entryName entry
+    login     = entryLogin entry
+    password  = entryPassword entry
+    url       = entryUrl entry
+
+    entries_  = entries db
+    source_   = source db ++
+      printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name login password url
+
 readDB :: FilePath -> IO Database
 readDB filename = do
   (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
@@ -64,22 +79,16 @@ readDB filename = do
                 err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"
 
 
-addEntry :: Database -> Entry -> IO Database
-addEntry db entry = do
+save :: Database -> IO ()
+save db = do
 
-  let source_ = source db ++ renderEntry entry
-  let db_ = db {entries = Map.insert (entryName entry) (entry) $ entries db, source = source_}
-
+  -- backup db file
   let f = fileName db
   renameFile f $ f ++ ".old"
 
   (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["--batch", "-e", "-a", "--default-recipient-self", "--output", f]) {std_in = CreatePipe}
-  hPutStr inh source_
+  hPutStr inh $ source db
   hFlush inh
   hClose inh
   e <- waitForProcess pid
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
-  return db_
-  where
-    renderEntry (Entry {entryName = name, entryLogin = login, entryPassword = password, entryUrl = url}) =
-      printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name login password url
