@@ -3,6 +3,7 @@ module Main (main) where
 import System.Environment (getArgs)
 import System.Process
 import Control.Exception (finally)
+import System.Exit
 
 import           Control.DeepSeq (deepseq)
 
@@ -24,8 +25,11 @@ main = do
     Add url -> withLock $ add url opts
     Query s -> query s opts
     List    -> listEntries opts
+    AcquireLock -> ifM Lock.acquire exitSuccess failOnLock
+    ReleaseLock -> ifM Lock.release exitSuccess exitFailure
   where
-    withLock action = ifM Lock.acquire (action `finally` Lock.release) (fail "Acquiring lock failed!")
+    withLock action = ifM Lock.acquire (action `finally` Lock.release) failOnLock
+    failOnLock = fail "Acquiring lock failed!"
 
 
 listEntries :: Options -> IO ()
