@@ -21,10 +21,10 @@ main :: IO ()
 main = do
   opts <- getArgs >>= Options.get
   case Options.mode opts of
-    Help    -> Options.printHelp
-    Add url -> withLock $ add url opts
-    Query s -> query s opts
-    List    -> listEntries opts
+    Help        -> Options.printHelp
+    Add url     -> withLock $ add url opts
+    Query s     -> query s opts
+    List        -> listEntries opts
     AcquireLock -> ifM Lock.acquire exitSuccess failOnLock
     ReleaseLock -> ifM Lock.release exitSuccess exitFailure
   where
