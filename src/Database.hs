@@ -1,7 +1,7 @@
 module Database (Database, readDB, addEntry, Entry(..), lookupEntry, entrieNames) where
 
 import           Control.Monad (when)
-import           Control.DeepSeq (deepseq)
+import           Control.DeepSeq
 
 import           System.IO (hGetContents, hPutStr, hFlush, hClose)
 import           System.Directory (renameFile)
@@ -21,6 +21,9 @@ data Entry = Entry {
 , entryPassword :: String
 , entryUrl      :: String
 } deriving Show
+
+instance NFData Entry where
+  rnf (Entry x1 x2 x3 x4) = rnf x1 `seq` rnf x2 `seq` rnf x3 `seq` rnf x4
 
 data Database = Database {
     entries       :: Map String Entry

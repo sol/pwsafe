@@ -3,6 +3,8 @@ module Main (main) where
 import System.Environment (getArgs)
 import System.Process
 
+import           Control.DeepSeq (deepseq)
+
 import           Database (Entry(..))
 import qualified Database
 
@@ -56,7 +58,11 @@ add url_ opts = do
     genPassword = fmap init $ readProcess "pwgen" ["-s", "20"] ""
 
     addEntry :: Entry -> IO ()
-    addEntry entry = do
-      db <- Database.readDB $ Options.databaseFile opts
-      _ <- Database.addEntry db entry
-      return ()
+    addEntry entry =
+      -- An Entry may have pending exceptions (e.g. invalid URL), so we force
+      -- them with `deepseq` before we read the database.  This way the user
+      -- gets an error before he has to enter his password.
+      entry `deepseq` do
+        db <- Database.readDB $ Options.databaseFile opts
+        _ <- Database.addEntry db entry
+        return ()
