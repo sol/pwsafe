@@ -1,18 +1,17 @@
 module Database (Database, readDB, addEntry, Entry(..), lookupEntry, entrieNames) where
 
-import Control.Monad (when)
-import Control.Exception (evaluate)
+import           Control.Monad (when)
+import           Control.DeepSeq (deepseq)
 
-import Text.Printf (printf)
-
-import System.IO (hGetContents, hPutStr, hFlush, hClose)
-import System.Process
-import System.Exit
+import           System.IO (hGetContents, hPutStr, hFlush, hClose)
+import           System.Directory (renameFile)
+import           System.Process
+import           System.Exit
 
 import qualified Data.Map as Map
 import           Data.Map (Map)
 
-import System.Directory (renameFile)
+import           Text.Printf (printf)
 
 import qualified Data.Ini.Reader as Ini
 
@@ -39,8 +38,7 @@ readDB :: FilePath -> IO Database
 readDB filename = do
   (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
   output <- hGetContents outh
-  _ <- evaluate $ length output
-  hClose outh
+  output `deepseq` hClose outh
   e <- waitForProcess pid
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
 
