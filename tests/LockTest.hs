@@ -21,21 +21,10 @@ tests = $(testGroupGenerator)
 -- Every test should be wrapped with this!
 lockTest :: IO a -> IO a
 lockTest action = do
-  r <- Lock.test
-  when r $ error "The lock is currently held! Are you accessing the resource right now?"
-  action `finally` Lock.release
-
-case_test = lockTest $ do
-  False @=? Lock.test
-  Lock.acquire
-  True  @=? Lock.test
+  r <- Lock.acquire
+  when (not r) $ fail "The lock is currently held! Are you accessing the resource right now?"
   Lock.release
-  False @=? Lock.test
-  where
-    (@=?) :: (Show a, Eq a) => a -> IO a -> Assertion
-    expected @=? action = do
-      actual <- action
-      assertEqual "" expected actual
+  action `finally` Lock.release
 
 data Action = Acquire | Release
   deriving (Eq, Show)
@@ -57,4 +46,3 @@ prop_acquireRelease actions = monadicIO $ do
       where
         step currentAction []                          = [(currentAction, currentAction == Acquire)]
         step currentAction l@((previousAction, _) : _) =  (currentAction, currentAction /= previousAction ) : l
-
