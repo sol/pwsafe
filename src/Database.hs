@@ -1,19 +1,13 @@
-module Database (Database, decrypt, encrypt, open, save, addEntry, Entry(..), lookupEntry, entrieNames) where
+module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entrieNames) where
 
-import           Control.Monad (when)
 import           Control.DeepSeq
-
-import           System.IO
-import           System.Directory (renameFile)
-import           System.Process
-import           System.Exit
-
-import qualified Data.Map as Map
 import           Data.Map (Map)
-
+import qualified Data.Map as Map
 import           Text.Printf (printf)
 
 import qualified Data.Ini.Reader as Ini
+
+import           Util (encrypt, decrypt)
 
 data Entry = Entry {
   entryName     :: String
@@ -52,16 +46,6 @@ addEntry db entry =
     source_   = source db ++
       printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name login password url
 
-
-decrypt :: FilePath -> IO String
-decrypt filename = do
-  (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
-  output <- hGetContents outh
-  output `deepseq` hClose outh
-  e <- waitForProcess pid
-  when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
-  return output
-
 open :: FilePath -> IO Database
 open filename = do
   output <- decrypt filename
@@ -70,9 +54,7 @@ open filename = do
     , source = output
     , fileName = filename
     }
-
   return db
-
   where
     parseResultToEntries (Left err)  = error $ show err
     parseResultToEntries (Right c) = Map.mapWithKey sectionToEntry c
@@ -82,19 +64,6 @@ open filename = do
             get k = Map.findWithDefault err k m
               where
                 err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"
-
-
-encrypt :: FilePath -> String -> IO ()
-encrypt f s = do
-
-  -- backup db file
-  renameFile f $ f ++ ".old"
-
-  (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["--batch", "-e", "-a", "--default-recipient-self", "--output", f]) {std_in = CreatePipe}
-  hPutStr inh s
-  hClose inh
-  e <- waitForProcess pid
-  when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
 
 save :: Database -> IO ()
 save db = encrypt (fileName db) (source db)

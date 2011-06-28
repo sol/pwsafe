@@ -4,7 +4,7 @@ import           System.IO
 import           System.Process
 import           Control.DeepSeq (deepseq)
 
-import           Util (nameFromUrl, run, withTempFile)
+import           Util (encrypt, decrypt, nameFromUrl, run, withTempFile)
 import           Options (Options)
 import qualified Options
 import           Database (Entry(..))
@@ -58,11 +58,11 @@ list opts = do
 edit :: Options -> IO ()
 edit Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
   putStrLn $ "using temporary file: " ++ fn
-  Database.decrypt databaseFile >>= hPutStr h >> hClose h
+  decrypt databaseFile >>= hPutStr h >> hClose h
   run "vim" ["-n", "-i", "NONE", "-c", "set nobackup", "-c", "set ft=dosini", fn]
-  readFile fn >>= Database.encrypt databaseFile
+  readFile fn >>= encrypt databaseFile
   run "shred" [fn]
 
 dump :: Options -> IO ()
-dump opts = Database.decrypt databaseFile >>= putStr
+dump opts = decrypt databaseFile >>= putStr
   where databaseFile = Options.databaseFile opts
