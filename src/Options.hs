@@ -7,7 +7,7 @@ import System.FilePath (joinPath)
 import System.Console.GetOpt
 import Text.Printf (printf)
 
-data Mode = Help | Add String | Query String | List | Edit | AcquireLock | ReleaseLock
+data Mode = Help | Add String | Query String | List | Edit | Dump | AcquireLock | ReleaseLock
   deriving (Eq, Show)
 
 data Options = Options {
@@ -28,6 +28,7 @@ options = [
   , Option ['q']  ["query"]   (ReqArg (\s opts -> opts { mode = Query s }) "TERM")  ""
   , Option []     ["list"]    (NoArg  (\  opts -> opts { mode = List}))             ""
   , Option []     ["edit"]    (NoArg  (\  opts -> opts { mode = Edit}))             ""
+  , Option []     ["dump"]    (NoArg  (\  opts -> opts { mode = Dump}))             "Dump database to stdout"
   , Option []     ["lock"]    (NoArg  (\  opts -> opts { mode = AcquireLock}))      "Acquire write lock for database"
   , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "Release write lock for database"
 

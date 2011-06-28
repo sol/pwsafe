@@ -27,6 +27,7 @@ main = do
     Query s     -> query s opts
     List        -> listEntries opts
     Edit        -> withLock $ Action.edit opts
+    Dump        -> Action.dump opts
     AcquireLock -> ifM Lock.acquire exitSuccess failOnLock
     ReleaseLock -> ifM Lock.release exitSuccess exitFailure
   where
