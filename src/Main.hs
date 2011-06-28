@@ -16,6 +16,7 @@ import qualified Options
 import           Options (Options, Mode(..))
 
 import qualified Lock
+import qualified Action
 
 main :: IO ()
 main = do
@@ -25,6 +26,7 @@ main = do
     Add url     -> withLock $ add url opts
     Query s     -> query s opts
     List        -> listEntries opts
+    Edit        -> withLock $ Action.edit opts
     AcquireLock -> ifM Lock.acquire exitSuccess failOnLock
     ReleaseLock -> ifM Lock.release exitSuccess exitFailure
   where

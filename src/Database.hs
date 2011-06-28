@@ -1,9 +1,9 @@
-module Database (Database, readDB, save, addEntry, Entry(..), lookupEntry, entrieNames) where
+module Database (Database, decrypt, encrypt, readDB, save, addEntry, Entry(..), lookupEntry, entrieNames) where
 
 import           Control.Monad (when)
 import           Control.DeepSeq
 
-import           System.IO (hGetContents, hPutStr, hFlush, hClose)
+import           System.IO
 import           System.Directory (renameFile)
 import           System.Process
 import           System.Exit
@@ -52,14 +52,19 @@ addEntry db entry =
     source_   = source db ++
       printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name login password url
 
-readDB :: FilePath -> IO Database
-readDB filename = do
+
+decrypt :: FilePath -> IO String
+decrypt filename = do
   (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
   output <- hGetContents outh
   output `deepseq` hClose outh
   e <- waitForProcess pid
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
+  return output
 
+readDB :: FilePath -> IO Database
+readDB filename = do
+  output <- decrypt filename
   let db = Database {
       entries = parseResultToEntries $ Ini.parse output
     , source = output
@@ -79,16 +84,17 @@ readDB filename = do
                 err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"
 
 
-save :: Database -> IO ()
-save db = do
+encrypt :: FilePath -> String -> IO ()
+encrypt f s = do
 
   -- backup db file
-  let f = fileName db
   renameFile f $ f ++ ".old"
 
   (Just inh, Nothing, Nothing, pid) <- createProcess $ (proc "gpg" ["--batch", "-e", "-a", "--default-recipient-self", "--output", f]) {std_in = CreatePipe}
-  hPutStr inh $ source db
-  hFlush inh
+  hPutStr inh s
   hClose inh
   e <- waitForProcess pid
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
+
+save :: Database -> IO ()
+save db = encrypt (fileName db) (source db)
