@@ -1,11 +1,59 @@
-module Action (edit, dump) where
+module Action (add, query, list, edit, dump) where
 
 import           System.IO
+import           System.Process
+import           Control.DeepSeq (deepseq)
 
+import           Util (nameFromUrl, run, withTempFile)
 import           Options (Options)
 import qualified Options
+import           Database (Entry(..))
 import qualified Database
-import           Util (run, withTempFile)
+
+add :: String -> Options -> IO ()
+add url_ opts = do
+  login_ <- genLogin
+  password_ <- genPassword
+  addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = login_, entryPassword = password_, entryUrl = url_}
+  where
+    genLogin :: IO String
+    genLogin = fmap init $ readProcess "pwgen" ["-s"] ""
+
+    genPassword :: IO String
+    genPassword = fmap init $ readProcess "pwgen" ["-s", "20"] ""
+
+    addEntry :: Entry -> IO ()
+    addEntry entry =
+      -- An Entry may have pending exceptions (e.g. invalid URL), so we force
+      -- them with `deepseq` before we read the database.  This way the user
+      -- gets an error before he has to enter his password.
+      entry `deepseq` do
+        db <- Database.readDB $ Options.databaseFile opts
+        case Database.addEntry db entry of
+          Left err  -> fail err
+          Right db_ -> Database.save db_
+
+query :: String -> Options -> IO ()
+query kw opts = do
+  db <- Database.readDB $ Options.databaseFile opts
+  case Database.lookupEntry db kw of
+    Nothing -> putStrLn "no match"
+    Just x  -> do
+      putStrLn $ entryUrl x
+      open (entryUrl x)
+      xclip (entryLogin x)
+      xclip (entryPassword x)
+  where
+    xclip :: String -> IO ()
+    xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
+
+    open :: String -> IO ()
+    open url = rawSystem "gnome-open" [url] >> return ()
+
+list :: Options -> IO ()
+list opts = do
+  db <- Database.readDB $ Options.databaseFile opts
+  mapM_ putStrLn $ Database.entrieNames db
 
 edit :: Options -> IO ()
 edit Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
