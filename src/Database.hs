@@ -1,13 +1,14 @@
 module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entrieNames) where
 
-import           Control.DeepSeq
-import           Data.Map (Map)
+import           Data.List
+import           Data.Map (Map, (!))
 import qualified Data.Map as Map
+import           Control.DeepSeq
 import           Text.Printf (printf)
 
 import qualified Data.Ini.Reader as Ini
 
-import           Util (encrypt, decrypt)
+import           Util (encrypt, decrypt, match, MatchResult(..))
 
 data Entry = Entry {
   entryName     :: String
@@ -25,8 +26,11 @@ data Database = Database {
   , fileName      :: FilePath
 } deriving Show
 
-lookupEntry :: Database -> String -> Maybe Entry
-lookupEntry db s = Map.lookup s $ entries db
+lookupEntry :: Database -> String -> Either String Entry
+lookupEntry db s = case match s $ Map.keys $ entries db of
+  None        -> Left "no match"
+  Ambiguous l -> Left $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
+  Match x     -> Right $ entries db ! x
 
 entrieNames :: Database -> [String]
 entrieNames = Map.keys . entries

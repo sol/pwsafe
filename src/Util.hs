@@ -1,5 +1,6 @@
 module Util where
 
+import           Data.List
 import           System.IO
 import           System.Process
 import           System.Exit
@@ -53,3 +54,12 @@ decrypt filename = do
   e <- waitForProcess pid
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e
   return output
+
+data MatchResult = None | Match String | Ambiguous [String]
+  deriving (Eq, Show)
+
+match :: String -> [String] -> MatchResult
+match s l = case filter (isPrefixOf s) l of
+  []  -> None
+  [x] -> Match x
+  xs   -> if s `elem` xs then Match s else Ambiguous xs

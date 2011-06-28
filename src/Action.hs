@@ -3,6 +3,7 @@ module Action (add, query, list, edit, dump) where
 import           System.IO
 import           System.Process
 import           Control.DeepSeq (deepseq)
+import           Text.Printf
 
 import           Util (encrypt, decrypt, nameFromUrl, run, withTempFile)
 import           Options (Options)
@@ -37,8 +38,8 @@ query :: String -> Options -> IO ()
 query kw opts = do
   db <- Database.open $ Options.databaseFile opts
   case Database.lookupEntry db kw of
-    Nothing -> putStrLn "no match"
-    Just x  -> do
+    Left err -> putStrLn err
+    Right x  -> do
       putStrLn $ entryUrl x
       open (entryUrl x)
       xclip (entryLogin x)
@@ -53,7 +54,7 @@ query kw opts = do
 list :: Options -> IO ()
 list opts = do
   db <- Database.open $ Options.databaseFile opts
-  mapM_ putStrLn $ Database.entrieNames db
+  mapM_ (putStrLn . printf "  %s") $ Database.entrieNames db
 
 edit :: Options -> IO ()
 edit Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
