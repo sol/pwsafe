@@ -28,14 +28,14 @@ add url_ opts = do
       -- them with `deepseq` before we read the database.  This way the user
       -- gets an error before he has to enter his password.
       entry `deepseq` do
-        db <- Database.readDB $ Options.databaseFile opts
+        db <- Database.open $ Options.databaseFile opts
         case Database.addEntry db entry of
           Left err  -> fail err
           Right db_ -> Database.save db_
 
 query :: String -> Options -> IO ()
 query kw opts = do
-  db <- Database.readDB $ Options.databaseFile opts
+  db <- Database.open $ Options.databaseFile opts
   case Database.lookupEntry db kw of
     Nothing -> putStrLn "no match"
     Just x  -> do
@@ -48,11 +48,11 @@ query kw opts = do
     xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
     open :: String -> IO ()
-    open url = rawSystem "gnome-open" [url] >> return ()
+    open url = run "gnome-open" [url]
 
 list :: Options -> IO ()
 list opts = do
-  db <- Database.readDB $ Options.databaseFile opts
+  db <- Database.open $ Options.databaseFile opts
   mapM_ putStrLn $ Database.entrieNames db
 
 edit :: Options -> IO ()

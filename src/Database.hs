@@ -1,4 +1,4 @@
-module Database (Database, decrypt, encrypt, readDB, save, addEntry, Entry(..), lookupEntry, entrieNames) where
+module Database (Database, decrypt, encrypt, open, save, addEntry, Entry(..), lookupEntry, entrieNames) where
 
 import           Control.Monad (when)
 import           Control.DeepSeq
@@ -62,8 +62,8 @@ decrypt filename = do
   when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e 
   return output
 
-readDB :: FilePath -> IO Database
-readDB filename = do
+open :: FilePath -> IO Database
+open filename = do
   output <- decrypt filename
   let db = Database {
       entries = parseResultToEntries $ Ini.parse output
