@@ -59,7 +59,7 @@ data MatchResult = None | Match String | Ambiguous [String]
   deriving (Eq, Show)
 
 match :: String -> [String] -> MatchResult
-match s l = case filter (isPrefixOf s) l of
+match s l = case filter (isInfixOf s) l of
   []  -> None
   [x] -> Match x
   xs   -> if s `elem` xs then Match s else Ambiguous xs
