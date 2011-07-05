@@ -1,6 +1,7 @@
 module Util where
 
 import           Data.List
+import qualified Data.Char as Char
 import           System.IO
 import           System.Process
 import           System.Exit
@@ -59,7 +60,9 @@ data MatchResult = None | Match String | Ambiguous [String]
   deriving (Eq, Show)
 
 match :: String -> [String] -> MatchResult
-match s l = case filter (isInfixOf s) l of
+match s l = case filter (isInfixOf (toLower s) . toLower) l of
   []  -> None
   [x] -> Match x
   xs   -> if s `elem` xs then Match s else Ambiguous xs
+  where
+    toLower = map Char.toLower
