@@ -12,7 +12,7 @@ import           Util (encrypt, decrypt, match, MatchResult(..))
 
 data Entry = Entry {
   entryName     :: String
-, entryLogin    :: String
+, entryLogin    :: Maybe String
 , entryPassword :: String
 , entryUrl      :: String
 } deriving Show
@@ -47,8 +47,9 @@ addEntry db entry =
     url       = entryUrl entry
 
     entries_  = entries db
-    source_   = source db ++
-      printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name login password url
+    source_   = source db ++ case login of
+      Just l  -> printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name l password url
+      Nothing -> printf "\n[%s]\npassword=%s\nurl=%s\n" name password url
 
 open :: FilePath -> IO Database
 open filename = do
@@ -63,8 +64,9 @@ open filename = do
     parseResultToEntries (Left err)  = error $ show err
     parseResultToEntries (Right c) = Map.mapWithKey sectionToEntry c
       where
-        sectionToEntry s m = Entry {entryName = s, entryLogin = get "login", entryPassword = get "password", entryUrl = get "url"}
+        sectionToEntry s m = Entry {entryName = s, entryLogin = login, entryPassword = get "password", entryUrl = get "url"}
           where
+            login = Map.lookup "login" m
             get k = Map.findWithDefault err k m
               where
                 err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"

@@ -15,7 +15,7 @@ add :: String -> Options -> IO ()
 add url_ opts = do
   login_ <- genLogin
   password_ <- genPassword
-  addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = login_, entryPassword = password_, entryUrl = url_}
+  addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = Just login_, entryPassword = password_, entryUrl = url_}
   where
     genLogin :: IO String
     genLogin = fmap init $ readProcess "pwgen" ["-s"] ""
@@ -39,10 +39,12 @@ query kw opts = do
   db <- Database.open $ Options.databaseFile opts
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
-    Right x  -> do
+    Right x  -> x `deepseq` do -- force pending exceptions early..
       putStrLn $ entryUrl x
       open (entryUrl x)
-      xclip (entryLogin x)
+      case entryLogin x of
+        Nothing -> putStrLn "no login, skipping"
+        Just l  -> xclip l
       xclip (entryPassword x)
   where
     xclip :: String -> IO ()
