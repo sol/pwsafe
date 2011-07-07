@@ -48,7 +48,10 @@ query kw opts = do
       xclip (entryPassword x)
   where
     xclip :: String -> IO ()
-    xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
+
+    xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
+    -- vimperator, for some reason, needs -l 2, pentadactyl works with -l 1
+    -- xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
     open :: String -> IO ()
     open url = run "xdg-open" [url]
