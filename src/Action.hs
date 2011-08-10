@@ -11,11 +11,19 @@ import qualified Options
 import           Database (Entry(..))
 import qualified Database
 
+xclip :: String -> IO ()
+xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
+-- vimperator, for some reason, needs -l 2, pentadactyl works with -l 1
+-- xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
+
 add :: String -> Options -> IO ()
 add url_ opts = do
   login_ <- genLogin
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = Just login_, entryPassword = password_, entryUrl = url_}
+  xclip login_
+  xclip password_
+  xclip password_
   where
     genLogin :: IO String
     genLogin = fmap init $ readProcess "pwgen" ["-s"] ""
@@ -47,11 +55,6 @@ query kw opts = do
         Just l  -> xclip l
       xclip (entryPassword x)
   where
-    xclip :: String -> IO ()
-
-    xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
-    -- vimperator, for some reason, needs -l 2, pentadactyl works with -l 1
-    -- xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
     open :: String -> IO ()
     open url = run "xdg-open" [url]
