@@ -1,4 +1,4 @@
-module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entrieNames) where
+module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entryNames) where
 
 import           Data.List
 import           Data.Map (Map, (!))
@@ -27,13 +27,13 @@ data Database = Database {
 } deriving Show
 
 lookupEntry :: Database -> String -> Either String Entry
-lookupEntry db s = case match s $ Map.keys $ entries db of
+lookupEntry db s = case match s $ entryNames db of
   None        -> Left "no match"
   Ambiguous l -> Left $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
   Match x     -> Right $ entries db ! x
 
-entrieNames :: Database -> [String]
-entrieNames = Map.keys . entries
+entryNames :: Database -> [String]
+entryNames = Map.keys . entries
 
 addEntry :: Database -> Entry -> Either String Database
 addEntry db entry =

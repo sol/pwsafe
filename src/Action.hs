@@ -67,7 +67,7 @@ query kw opts = do
 list :: Options -> IO ()
 list opts = do
   db <- Database.open $ Options.databaseFile opts
-  mapM_ (putStrLn . printf "  %s") $ Database.entrieNames db
+  mapM_ (putStrLn . printf "  %s") $ Database.entryNames db
 
 edit :: Options -> IO ()
 edit Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
