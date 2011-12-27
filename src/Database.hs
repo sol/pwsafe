@@ -14,7 +14,7 @@ data Entry = Entry {
   entryName     :: String
 , entryLogin    :: Maybe String
 , entryPassword :: String
-, entryUrl      :: String
+, entryUrl      :: Maybe String
 } deriving Show
 
 instance NFData Entry where
@@ -47,10 +47,12 @@ addEntry db entry =
     url       = entryUrl entry
 
     entries_  = entries db
-    source_   = source db ++ case login of
-      Just l  -> printf "\n[%s]\nlogin=%s\npassword=%s\nurl=%s\n" name l password url
-      Nothing -> printf "\n[%s]\npassword=%s\nurl=%s\n" name password url
-
+    source_ = source db
+      ++ "\n[" ++ name ++ "]"
+      ++ maybe "" (\x -> "\nlogin=" ++ x) login
+      ++ "\npassword=" ++ password
+      ++ maybe "" (\x -> "\nurl=" ++ x) url
+      ++ "\n"
 open :: FilePath -> IO Database
 open filename = do
   output <- decrypt filename
@@ -64,9 +66,10 @@ open filename = do
     parseResultToEntries (Left err)  = error $ show err
     parseResultToEntries (Right c) = Map.mapWithKey sectionToEntry c
       where
-        sectionToEntry s m = Entry {entryName = s, entryLogin = login, entryPassword = get "password", entryUrl = get "url"}
+        sectionToEntry s m = Entry {entryName = s, entryLogin = login, entryPassword = get "password", entryUrl = url}
           where
             login = Map.lookup "login" m
+            url = Map.lookup "url" m
             get k = Map.findWithDefault err k m
               where
                 err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"
