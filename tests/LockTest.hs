@@ -1,10 +1,6 @@
-{-# LANGUAGE TemplateHaskell #-}
-module LockTest (tests) where
+module LockTest (test) where
 import           Test.Framework
-import           Test.Framework.TH
-import           Test.Framework.Providers.HUnit
 import           Test.Framework.Providers.QuickCheck2
-import           Test.HUnit hiding (assert, (@=?))
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
@@ -13,8 +9,8 @@ import           Control.Exception (finally)
 
 import qualified Lock
 
-main  = defaultMain [tests]
-tests = $(testGroupGenerator)
+test :: Test
+test = testProperty "acquireRelease" prop_acquireRelease
 
 -- | Make sure that lock is not currently held, run action, release lock
 --
@@ -23,7 +19,7 @@ lockTest :: IO a -> IO a
 lockTest action = do
   r <- Lock.acquire
   when (not r) $ fail "The lock is currently held! Are you accessing the resource right now?"
-  Lock.release
+  True <- Lock.release
   action `finally` Lock.release
 
 data Action = Acquire | Release
