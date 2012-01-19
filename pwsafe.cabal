@@ -22,4 +22,4 @@ executable pwsafe
     , directory
     , deepseq
     , unix
-    , hsini >= 0.1.999
+    , config-ng

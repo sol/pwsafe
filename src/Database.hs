@@ -1,12 +1,13 @@
 module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entryNames) where
 
-import           Data.List
-import           Data.Map (Map, (!))
-import qualified Data.Map as Map
+import           Prelude hiding (lookup)
+
+import           Data.List (intercalate)
 import           Control.DeepSeq
 import           Text.Printf (printf)
 
-import qualified Data.Ini.Reader as Ini
+import           Data.Config.String   (Config)
+import qualified Data.Config.String as Config
 
 import           Util (encrypt, decrypt, match, MatchResult(..))
 
@@ -15,64 +16,69 @@ data Entry = Entry {
 , entryLogin    :: Maybe String
 , entryPassword :: String
 , entryUrl      :: Maybe String
-} deriving Show
+} deriving (Eq, Show)
 
 instance NFData Entry where
   rnf (Entry x1 x2 x3 x4) = rnf x1 `seq` rnf x2 `seq` rnf x3 `seq` rnf x4
 
 data Database = Database {
-    entries       :: Map String Entry
-  , source        :: String
+    config        :: Config
   , fileName      :: FilePath
-} deriving Show
+}
 
 lookupEntry :: Database -> String -> Either String Entry
 lookupEntry db s = case match s $ entryNames db of
   None        -> Left "no match"
   Ambiguous l -> Left $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
-  Match x     -> Right $ entries db ! x
+  Match name  -> go
+    where
+      go = do
+        password <- get "password"
+        let url = lookup "url"
+        return Entry {entryName = name, entryLogin = lookup "login", entryPassword = password, entryUrl = url}
+      lookup k = Config.lookup name k (config db)
+      get k = maybe
+        (Left $ "config error: section [" ++ name ++ "] dose not define required option " ++ show k ++ "!")
+        Right
+        (lookup k)
+
+hasEntry :: String -> Database -> Bool
+hasEntry name = Config.hasSection name . config
 
 entryNames :: Database -> [String]
-entryNames = Map.keys . entries
+entryNames = Config.sections . config
 
 addEntry :: Database -> Entry -> Either String Database
 addEntry db entry =
-  case Map.member name entries_ of
+  case hasEntry name db of
     True  -> Left $ printf "Entry with name \"%s\" already exists!" name
-    False -> Right db {entries = Map.insert name entry entries_, source = source_}
+    False -> Right db {config = insertEntry entry $ config db}
   where
     name      = entryName entry
+
+insertEntry :: Entry -> Config -> Config
+insertEntry entry = mInsert "url" url . insert "password" password . mInsert "login" login
+  where
+    insert = Config.insert $ entryName entry
+    mInsert k = maybe id (insert k)
+
     login     = entryLogin entry
     password  = entryPassword entry
     url       = entryUrl entry
 
-    entries_  = entries db
-    source_ = source db
-      ++ "\n[" ++ name ++ "]"
-      ++ maybe "" (\x -> "\nlogin=" ++ x) login
-      ++ "\npassword=" ++ password
-      ++ maybe "" (\x -> "\nurl=" ++ x) url
-      ++ "\n"
 open :: FilePath -> IO Database
 open filename = do
-  output <- decrypt filename
-  let db = Database {
-      entries = parseResultToEntries $ Ini.parse output
-    , source = output
-    , fileName = filename
-    }
-  return db
-  where
-    parseResultToEntries (Left err)  = error $ show err
-    parseResultToEntries (Right c) = Map.mapWithKey sectionToEntry c
-      where
-        sectionToEntry s m = Entry {entryName = s, entryLogin = login, entryPassword = get "password", entryUrl = url}
-          where
-            login = Map.lookup "login" m
-            url = Map.lookup "url" m
-            get k = Map.findWithDefault err k m
-              where
-                err = error $ "config error: section [" ++ s ++ "] dose not define required option " ++ show k ++ "!"
+  decrypt filename >>= \input ->
+    case Config.parse input of
+      Left err ->
+        error err
+      Right c ->
+        return Database {
+            config = c
+          , fileName = filename
+        }
 
 save :: Database -> IO ()
 save db = encrypt (fileName db) (source db)
+  where
+    source = Config.render . config
