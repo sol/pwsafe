@@ -17,16 +17,17 @@ main = do
   args <- getArgs
   run args Cipher.gpgCipher
 
-run :: [String] -> Cipher -> IO ()
-run args c = do
+run :: [String] -> (FilePath -> Cipher) -> IO ()
+run args cipher = do
   opts <- Options.get args
+  let c = cipher $ Options.databaseFile opts
   case Options.mode opts of
     Help        ->            Options.printHelp
-    Add url     -> withLock $ Action.add   c url opts
-    Query s     ->            Action.query c s opts
-    List        ->            Action.list  c opts
-    Edit        -> withLock $ Action.edit  c opts
-    Dump        ->            Action.dump  c opts
+    Add url     -> withLock $ Action.add   c url
+    Query s     ->            Action.query c s
+    List        ->            Action.list  c
+    Edit        -> withLock $ Action.edit  c
+    Dump        ->            Action.dump  c
     AcquireLock -> ifM Lock.acquire exitSuccess failOnLock
     ReleaseLock -> ifM Lock.release exitSuccess exitFailure
   where

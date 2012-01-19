@@ -23,10 +23,7 @@ data Entry = Entry {
 instance NFData Entry where
   rnf (Entry x1 x2 x3 x4) = rnf x1 `seq` rnf x2 `seq` rnf x3 `seq` rnf x4
 
-data Database = Database {
-    config        :: Config
-  , fileName      :: FilePath
-}
+newtype Database = Database { config :: Config }
 
 lookupEntry :: Database -> String -> Either String Entry
 lookupEntry db s = case match s $ entryNames db of
@@ -68,19 +65,14 @@ insertEntry entry = mInsert "url" url . insert "password" password . mInsert "lo
     password  = entryPassword entry
     url       = entryUrl entry
 
-open :: Cipher -> FilePath -> IO Database
-open c filename = do
-  Cipher.decrypt c filename >>= \input ->
+open :: Cipher -> IO Database
+open c = do
+  Cipher.decrypt c >>= \input ->
     case Config.parse input of
       Left err ->
         error err
       Right conf ->
-        return Database {
-            config = conf
-          , fileName = filename
-        }
+        return Database { config = conf }
 
 save :: Cipher -> Database -> IO ()
-save c db = Cipher.encrypt c (fileName db) (source db)
-  where
-    source = Config.render . config
+save c (Database db) = Cipher.encrypt c (Config.render db)
