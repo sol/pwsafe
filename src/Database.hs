@@ -9,7 +9,9 @@ import           Text.Printf (printf)
 import           Data.Config.String   (Config)
 import qualified Data.Config.String as Config
 
-import           Util (encrypt, decrypt, match, MatchResult(..))
+import           Util (match, MatchResult(..))
+import           Cipher (Cipher)
+import qualified Cipher
 
 data Entry = Entry {
   entryName     :: String
@@ -66,19 +68,19 @@ insertEntry entry = mInsert "url" url . insert "password" password . mInsert "lo
     password  = entryPassword entry
     url       = entryUrl entry
 
-open :: FilePath -> IO Database
-open filename = do
-  decrypt filename >>= \input ->
+open :: Cipher -> FilePath -> IO Database
+open c filename = do
+  Cipher.decrypt c filename >>= \input ->
     case Config.parse input of
       Left err ->
         error err
-      Right c ->
+      Right conf ->
         return Database {
-            config = c
+            config = conf
           , fileName = filename
         }
 
-save :: Database -> IO ()
-save db = encrypt (fileName db) (source db)
+save :: Cipher -> Database -> IO ()
+save c db = Cipher.encrypt c (fileName db) (source db)
   where
     source = Config.render . config

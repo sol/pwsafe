@@ -7,19 +7,21 @@ import           Text.Printf
 
 import           Data.Foldable (forM_)
 
-import           Util (encrypt, decrypt, nameFromUrl, run, withTempFile)
+import           Util (nameFromUrl, run, withTempFile)
 import           Options (Options)
 import qualified Options
 import           Database (Entry(..))
 import qualified Database
+import           Cipher (Cipher)
+import qualified Cipher
 
 xclip :: String -> IO ()
 xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
 -- vimperator, for some reason, needs -l 2, pentadactyl works with -l 1
 -- xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
 
-add :: String -> Options -> IO ()
-add url_ opts = do
+add :: Cipher -> String -> Options -> IO ()
+add c url_ opts = do
   login_ <- genLogin
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = Just login_, entryPassword = password_, entryUrl = Just url_}
@@ -39,14 +41,14 @@ add url_ opts = do
       -- them with `deepseq` before we read the database.  This way the user
       -- gets an error before he has to enter his password.
       entry `deepseq` do
-        db <- Database.open $ Options.databaseFile opts
+        db <- Database.open c $ Options.databaseFile opts
         case Database.addEntry db entry of
           Left err  -> fail err
-          Right db_ -> Database.save db_
+          Right db_ -> Database.save c db_
 
-query :: String -> Options -> IO ()
-query kw opts = do
-  db <- Database.open $ Options.databaseFile opts
+query :: Cipher -> String -> Options -> IO ()
+query c kw opts = do
+  db <- Database.open c $ Options.databaseFile opts
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
     Right x  -> x `deepseq` do -- force pending exceptions early..
@@ -64,19 +66,19 @@ query kw opts = do
     open :: String -> IO ()
     open url = run "xdg-open" [url]
 
-list :: Options -> IO ()
-list opts = do
-  db <- Database.open $ Options.databaseFile opts
+list :: Cipher -> Options -> IO ()
+list c opts = do
+  db <- Database.open c $ Options.databaseFile opts
   mapM_ (putStrLn . printf "  %s") $ Database.entryNames db
 
-edit :: Options -> IO ()
-edit Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
+edit :: Cipher -> Options -> IO ()
+edit c Options.Options {Options.databaseFile = databaseFile} = withTempFile $ \fn h -> do
   putStrLn $ "using temporary file: " ++ fn
-  decrypt databaseFile >>= hPutStr h >> hClose h
+  Cipher.decrypt c databaseFile >>= hPutStr h >> hClose h
   run "vim" ["-n", "-i", "NONE", "-c", "set nobackup", "-c", "set ft=dosini", fn]
-  readFile fn >>= encrypt databaseFile
+  readFile fn >>= Cipher.encrypt c databaseFile
   run "shred" [fn]
 
-dump :: Options -> IO ()
-dump opts = decrypt databaseFile >>= putStr
+dump :: Cipher -> Options -> IO ()
+dump c opts = Cipher.decrypt c databaseFile >>= putStr
   where databaseFile = Options.databaseFile opts
