@@ -20,15 +20,15 @@ xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
 
 add :: Cipher -> String -> IO ()
 add c url_ = do
-  login_ <- genLogin
+  user <- genUser
   password_ <- genPassword
-  addEntry $ Entry {entryName = nameFromUrl url_, entryLogin = Just login_, entryPassword = password_, entryUrl = Just url_}
-  xclip login_
+  addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = password_, entryUrl = Just url_}
+  xclip user
   xclip password_
   xclip password_
   where
-    genLogin :: IO String
-    genLogin = fmap init $ readProcess "pwgen" ["-s"] ""
+    genUser :: IO String
+    genUser = fmap init $ readProcess "pwgen" ["-s"] ""
 
     genPassword :: IO String
     genPassword = fmap init $ readProcess "pwgen" ["-s", "20"] ""
@@ -54,10 +54,7 @@ query c kw = do
       forM_ (entryUrl x) $ \url -> do
         putStrLn url
         open url
-
-      case entryLogin x of
-        Nothing -> putStrLn "no login, skipping"
-        Just l  -> xclip l
+      forM_ (entryUser x) xclip
       xclip (entryPassword x)
   where
 

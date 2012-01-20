@@ -15,7 +15,7 @@ import qualified Cipher
 
 data Entry = Entry {
   entryName     :: String
-, entryLogin    :: Maybe String
+, entryUser     :: Maybe String
 , entryPassword :: String
 , entryUrl      :: Maybe String
 } deriving (Eq, Show)
@@ -37,7 +37,7 @@ lookupEntry db s = case match s $ entryNames db of
       go = do
         password <- get "password"
         let url = lookup "url"
-        return Entry {entryName = name, entryLogin = lookup "login", entryPassword = password, entryUrl = url}
+        return Entry {entryName = name, entryUser = lookup "user", entryPassword = password, entryUrl = url}
       lookup k = Config.lookup name k (config db)
       get k = maybe
         (Left $ "config error: section [" ++ name ++ "] dose not define required option " ++ show k ++ "!")
@@ -60,16 +60,16 @@ addEntry db entry =
 
 insertEntry :: Entry -> Config -> Config
 insertEntry entry =
-    mInsert "login" login
+    mInsert "user" user
   . insert "password" password
   . mInsert "url" url
   where
     insert = Config.insert $ entryName entry
     mInsert k = maybe id (insert k)
 
-    login     = entryLogin entry
-    password  = entryPassword entry
-    url       = entryUrl entry
+    user     = entryUser entry
+    password = entryPassword entry
+    url      = entryUrl entry
 
 open :: Cipher -> IO Database
 open c = parse `fmap` Cipher.decrypt c

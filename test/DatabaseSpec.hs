@@ -15,10 +15,10 @@ import qualified Database
 instance Arbitrary Entry where
   arbitrary = do
     name <- shortWord
-    login <- genMaybe shortWord
+    user <- genMaybe shortWord
     password <- shortWord
     url <- genMaybe shortWord
-    return $ Entry name login password url
+    return $ Entry name user password url
     where
       shortWord = vectorOf 3 $ choose ('a', 'z')
 
@@ -36,7 +36,7 @@ instance Arbitrary DatabaseFile where
 addEntry :: Entry -> Database -> Database
 addEntry e db = either error id $ Database.addEntry db e
 
-entry name login password url = Database.Entry name (Just login) password (Just url)
+entry name user password url = Database.Entry name (Just user) password (Just url)
 
 minEntry name password = Entry name Nothing password Nothing
 (-:) :: a -> (a -> b) -> b
@@ -52,24 +52,24 @@ spec = do
     it "adds an entry to an empty database" $ do
       addEntry (entry "example.com" "foo" "bar" "http://example.com") empty `shouldRenderTo` do
         "[example.com]"
-        "login=foo"
+        "user=foo"
         "password=bar"
         "url=http://example.com"
 
     it "adds an entry to a database with one entry" testCase $ do
       parse . build $ do
         "[foobar]"
-        "login=one"
+        "user=one"
         "password=two"
         "url=three"
       -: addEntry (entry "example.com" "foo" "bar" "http://example.com") `shouldRenderTo` do
         "[foobar]"
-        "login=one"
+        "user=one"
         "password=two"
         "url=three"
         ""
         "[example.com]"
-        "login=foo"
+        "user=foo"
         "password=bar"
         "url=http://example.com"
 
@@ -81,7 +81,7 @@ spec = do
       in
         (not $ hasEntry name db) ==> (renderedDb ++) (render $ addEntry e empty) == (render $ addEntry e db)
 
-    it "accepts Nothing for login" $ do
+    it "accepts Nothing for user" $ do
       addEntry (Entry "example.com" Nothing "bar" (Just "http://example.com")) empty `shouldRenderTo` do
         "[example.com]"
         "password=bar"
@@ -90,14 +90,14 @@ spec = do
     it "accepts Nothing for url" $ do
       addEntry (Entry "example.com" (Just "foo") "bar" Nothing) empty `shouldRenderTo` do
         "[example.com]"
-        "login=foo"
+        "user=foo"
         "password=bar"
 
   describe "lookupEntry" $ do
     it "works on a database with one entry" $ do
       db <- return . parse . build $ do
         "[example.com]"
-        "login=foo"
+        "user=foo"
         "password=bar"
         "url=http://example.com"
       lookupEntry db "example.com" `shouldBe` Right (entry "example.com" "foo" "bar" "http://example.com")
