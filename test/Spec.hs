@@ -1,11 +1,12 @@
-module Spec where
+module Spec (main) where
 
 import           Test.Spec
 
-import qualified Options
 import           Options (Mode(..))
+import qualified Options
 
 import qualified LockTest
+import qualified DatabaseSpec
 
 main :: IO ()
 main = run $ do
@@ -34,3 +35,5 @@ main = run $ do
 
   describe "Lock" $ do
     add LockTest.test
+
+  describe "Database" DatabaseSpec.spec

@@ -15,10 +15,10 @@ import qualified Cipher
 main :: IO ()
 main = do
   args <- getArgs
-  run args Cipher.gpgCipher
+  run Cipher.gpgCipher args
 
-run :: [String] -> (FilePath -> Cipher) -> IO ()
-run args cipher = do
+run :: (FilePath -> Cipher) -> [String] -> IO ()
+run cipher args = do
   opts <- Options.get args
   let c = cipher $ Options.databaseFile opts
   case Options.mode opts of

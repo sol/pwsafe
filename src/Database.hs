@@ -1,4 +1,4 @@
-module Database (Database, open, save, addEntry, Entry(..), lookupEntry, entryNames) where
+module Database (Database, empty, open, save, parse, render, addEntry, Entry(..), lookupEntry, hasEntry, entryNames) where
 
 import           Prelude hiding (lookup)
 
@@ -24,6 +24,9 @@ instance NFData Entry where
   rnf (Entry x1 x2 x3 x4) = rnf x1 `seq` rnf x2 `seq` rnf x3 `seq` rnf x4
 
 newtype Database = Database { config :: Config }
+
+empty :: Database
+empty = Database Config.empty
 
 lookupEntry :: Database -> String -> Either String Entry
 lookupEntry db s = case match s $ entryNames db of
@@ -56,7 +59,10 @@ addEntry db entry =
     name      = entryName entry
 
 insertEntry :: Entry -> Config -> Config
-insertEntry entry = mInsert "url" url . insert "password" password . mInsert "login" login
+insertEntry entry =
+    mInsert "login" login
+  . insert "password" password
+  . mInsert "url" url
   where
     insert = Config.insert $ entryName entry
     mInsert k = maybe id (insert k)
@@ -66,13 +72,13 @@ insertEntry entry = mInsert "url" url . insert "password" password . mInsert "lo
     url       = entryUrl entry
 
 open :: Cipher -> IO Database
-open c = do
-  Cipher.decrypt c >>= \input ->
-    case Config.parse input of
-      Left err ->
-        error err
-      Right conf ->
-        return Database { config = conf }
+open c = parse `fmap` Cipher.decrypt c
+
+parse :: String -> Database
+parse input = either error Database (Config.parse input)
 
 save :: Cipher -> Database -> IO ()
-save c (Database db) = Cipher.encrypt c (Config.render db)
+save c = Cipher.encrypt c . render
+
+render :: Database -> String
+render (Database db) = Config.render db
