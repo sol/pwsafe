@@ -15,6 +15,7 @@ executable pwsafe
   main-is:        Main.hs
   build-depends:
       base
+    , transformers
     , process
     , filepath
     , network

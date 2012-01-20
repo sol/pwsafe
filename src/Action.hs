@@ -1,52 +1,101 @@
-module Action (add, query, list, edit, dump) where
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+module Action (runAction, mkEnv, add, query, list, edit, dump) where
 
-import           System.IO
-import           System.Process
+import           Prelude hiding (putStrLn, putStr)
+import           Control.Monad.Trans.Reader
+import           Control.Monad.IO.Class (liftIO)
+import           System.IO (hPutStr, hClose)
+import qualified System.IO as IO
 import           Control.DeepSeq (deepseq)
 import           Text.Printf
-
 import           Data.Foldable (forM_)
 
 import           Util (nameFromUrl, run, withTempFile)
-import           Database (Entry(..))
+import           Database (Database, Entry(..))
 import qualified Database
 import           Cipher (Cipher)
 import qualified Cipher
+import           Config (Config)
+import qualified Config
 
-xclip :: String -> IO ()
-xclip input = readProcess "xclip" ["-l", "1", "-quiet"] input >> return ()
--- vimperator, for some reason, needs -l 2, pentadactyl works with -l 1
--- xclip input = readProcess "xclip" ["-l", "2", "-quiet"] input >> return ()
+newtype ActionM a = ActionM (ReaderT Env IO a)
+  deriving (Monad, Functor)
 
-add :: Cipher -> String -> IO ()
-add c url_ = do
+runAction :: Env -> ActionM a -> IO a
+runAction env (ActionM a) = runReaderT a env
+
+data Env = Env {
+  envConfig :: Config
+, envCipher :: Cipher
+, putStr_   :: String -> IO ()
+, putStrLn_ :: String -> IO ()
+}
+
+mkEnv :: Config -> Cipher -> Env
+mkEnv conf cipher = Env {
+  envConfig = conf
+, envCipher = cipher
+, putStr_   = IO.putStr
+, putStrLn_ = IO.putStrLn
+}
+
+liftAction :: (Env -> IO a) -> ActionM a
+liftAction action = ActionM $ do
+  env <- ask
+  liftIO $ action env
+
+liftAction1 :: (Env -> b -> IO a) -> b -> ActionM a
+liftAction1 action x = ActionM $ do
+  env <- ask
+  liftIO $ action env x
+
+copyToClipboard :: String -> ActionM ()
+copyToClipboard = liftAction1 (Config.copyToClipboard . envConfig)
+
+encrypt :: String -> ActionM ()
+encrypt = liftAction1 $ \Env{envCipher = c} -> Cipher.encrypt c
+
+decrypt :: ActionM String
+decrypt = liftAction  $ \Env{envCipher = c} -> Cipher.decrypt c
+
+openDatabase :: ActionM Database
+openDatabase = Database.parse `fmap` decrypt
+
+saveDatabase :: Database -> ActionM ()
+saveDatabase = encrypt . Database.render
+
+putStrLn :: String -> ActionM ()
+putStrLn = liftAction1 putStrLn_
+
+putStr :: String -> ActionM ()
+putStr = liftAction1 putStr_
+
+
+add :: String -> ActionM ()
+add url_ = do
   user <- genUser
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = password_, entryUrl = Just url_}
-  xclip user
-  xclip password_
-  xclip password_
+  copyToClipboard user
+  copyToClipboard password_
+  copyToClipboard password_
   where
-    genUser :: IO String
-    genUser = fmap init $ readProcess "pwgen" ["-s"] ""
+    genPassword = liftAction (Config.generatePassword . envConfig)
+    genUser  = liftAction (Config.generateUser . envConfig)
 
-    genPassword :: IO String
-    genPassword = fmap init $ readProcess "pwgen" ["-s", "20"] ""
-
-    addEntry :: Entry -> IO ()
     addEntry entry =
       -- An Entry may have pending exceptions (e.g. invalid URL), so we force
       -- them with `deepseq` before we read the database.  This way the user
       -- gets an error before he has to enter his password.
       entry `deepseq` do
-        db <- Database.open c
+        db <- openDatabase
         case Database.addEntry db entry of
           Left err  -> fail err
-          Right db_ -> Database.save c db_
+          Right db_ -> saveDatabase db_
 
-query :: Cipher -> String -> IO ()
-query c kw = do
-  db <- Database.open c
+query :: String -> ActionM ()
+query kw = do
+  db <- openDatabase
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
     Right x  -> x `deepseq` do -- force pending exceptions early..
@@ -54,25 +103,23 @@ query c kw = do
       forM_ (entryUrl x) $ \url -> do
         putStrLn url
         open url
-      forM_ (entryUser x) xclip
-      xclip (entryPassword x)
+      forM_ (entryUser x) copyToClipboard
+      copyToClipboard (entryPassword x)
   where
+    open = liftAction1 (Config.openUrl . envConfig)
 
-    open :: String -> IO ()
-    open url = run "xdg-open" [url]
-
-list :: Cipher -> IO ()
-list c = do
-  db <- Database.open c
+list :: ActionM ()
+list = do
+  db <- openDatabase
   mapM_ (putStrLn . printf "  %s") $ Database.entryNames db
 
 edit :: Cipher -> IO ()
 edit c = withTempFile $ \fn h -> do
-  putStrLn $ "using temporary file: " ++ fn
+  IO.putStrLn $ "using temporary file: " ++ fn
   Cipher.decrypt c >>= hPutStr h >> hClose h
   run "vim" ["-n", "-i", "NONE", "-c", "set nobackup", "-c", "set ft=dosini", fn]
   readFile fn >>= Cipher.encrypt c
   run "shred" [fn]
 
-dump :: Cipher -> IO ()
-dump c = Cipher.decrypt c >>= putStr
+dump :: ActionM ()
+dump = decrypt >>= putStr

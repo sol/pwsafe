@@ -1,4 +1,4 @@
-module Database (Database, empty, open, save, parse, render, addEntry, Entry(..), lookupEntry, hasEntry, entryNames) where
+module Database (Database, empty, parse, render, addEntry, Entry(..), lookupEntry, hasEntry, entryNames) where
 
 import           Prelude hiding (lookup)
 
@@ -10,8 +10,6 @@ import           Data.Config.String   (Config)
 import qualified Data.Config.String as Config
 
 import           Util (match, MatchResult(..))
-import           Cipher (Cipher)
-import qualified Cipher
 
 data Entry = Entry {
   entryName     :: String
@@ -71,14 +69,8 @@ insertEntry entry =
     password = entryPassword entry
     url      = entryUrl entry
 
-open :: Cipher -> IO Database
-open c = parse `fmap` Cipher.decrypt c
-
 parse :: String -> Database
 parse input = either error Database (Config.parse input)
-
-save :: Cipher -> Database -> IO ()
-save c = Cipher.encrypt c . render
 
 render :: Database -> String
 render (Database db) = Config.render db
