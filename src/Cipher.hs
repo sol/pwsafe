@@ -1,4 +1,4 @@
-module Cipher (Cipher, encrypt, decrypt, gpgCipher) where
+module Cipher (Cipher(..), gpgCipher) where
 
 import           System.IO
 import           System.Process
@@ -22,12 +22,12 @@ gpgCipher filename = Cipher enc dec
       hPutStr inh s
       hClose inh
       e <- waitForProcess pid
-      when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e
+      when (e /= ExitSuccess) $ error $ "gpg exited with an error: " ++ show e
 
     dec = do
       (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
       output <- hGetContents outh
       output `deepseq` hClose outh
       e <- waitForProcess pid
-      when (e /= ExitSuccess) $ fail $ "gpg exited with an error: " ++ show e
+      when (e /= ExitSuccess) $ error $ "gpg exited with an error: " ++ show e
       return output

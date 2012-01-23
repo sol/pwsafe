@@ -27,16 +27,14 @@ runAction env (ActionM a) = runReaderT a env
 data Env = Env {
   envConfig :: Config
 , envCipher :: Cipher
-, putStr_   :: String -> IO ()
-, putStrLn_ :: String -> IO ()
+, envHandle :: IO.Handle
 }
 
-mkEnv :: Config -> Cipher -> Env
-mkEnv conf cipher = Env {
+mkEnv :: Config -> Cipher -> IO.Handle -> Env
+mkEnv conf cipher h = Env {
   envConfig = conf
 , envCipher = cipher
-, putStr_   = IO.putStr
-, putStrLn_ = IO.putStrLn
+, envHandle = h
 }
 
 liftAction :: (Env -> IO a) -> ActionM a
@@ -48,6 +46,12 @@ liftAction1 :: (Env -> b -> IO a) -> b -> ActionM a
 liftAction1 action x = ActionM $ do
   env <- ask
   liftIO $ action env x
+
+putStrLn :: String -> ActionM ()
+putStrLn = liftAction1 (IO.hPutStrLn . envHandle)
+
+putStr :: String -> ActionM ()
+putStr = liftAction1 (IO.hPutStr . envHandle)
 
 copyToClipboard :: String -> ActionM ()
 copyToClipboard = liftAction1 (Config.copyToClipboard . envConfig)
@@ -63,12 +67,6 @@ openDatabase = Database.parse `fmap` decrypt
 
 saveDatabase :: Database -> ActionM ()
 saveDatabase = encrypt . Database.render
-
-putStrLn :: String -> ActionM ()
-putStrLn = liftAction1 putStrLn_
-
-putStr :: String -> ActionM ()
-putStr = liftAction1 putStr_
 
 
 add :: String -> ActionM ()
@@ -90,7 +88,7 @@ add url_ = do
       entry `deepseq` do
         db <- openDatabase
         case Database.addEntry db entry of
-          Left err  -> fail err
+          Left err  -> error err
           Right db_ -> saveDatabase db_
 
 query :: String -> ActionM ()

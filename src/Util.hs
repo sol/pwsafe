@@ -28,7 +28,7 @@ run command args = do
   e <- rawSystem command args
   case e of
     ExitSuccess   -> return ()
-    ExitFailure n -> fail $ printf "%s %s exited with an error: %d" (show command) (show args) n
+    ExitFailure n -> error $ printf "%s %s exited with an error: %d" (show command) (show args) n
 
 withTempFile :: (FilePath -> Handle -> IO a) -> IO a
 withTempFile action = do

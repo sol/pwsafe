@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
-module DatabaseSpec (main, spec) where
+module DatabaseSpec (main, spec, DatabaseFile(..)) where
 
 import           Test.Spec
 import           Test.Framework.Providers.HUnit
@@ -28,17 +28,21 @@ instance Arbitrary Entry where
 data DatabaseFile = DatabaseFile String [Entry]
   deriving Show
 
+dbFromList xs = DatabaseFile (render $ foldr addEntry empty xs) xs
+
 instance Arbitrary DatabaseFile where
   arbitrary = do
-    xs <- resize 20 $ listOf arbitrary
-    return $ DatabaseFile (render $ foldr addEntry empty $ nubBy (\a b -> entryName a == entryName b) xs) xs
+    xs <- nubBy (\a b -> entryName a == entryName b) <$> (resize 20 $ listOf arbitrary)
+    return $ dbFromList xs
+
+  shrink (DatabaseFile _ []) = []
+  shrink (DatabaseFile _ xs) = [ dbFromList (xs \\ [x]) | x <- xs ]
 
 addEntry :: Entry -> Database -> Database
 addEntry e db = either error id $ Database.addEntry db e
 
 entry name user password url = Database.Entry name (Just user) password (Just url)
 
-minEntry name password = Entry name Nothing password Nothing
 (-:) :: a -> (a -> b) -> b
 x -: f = f x
 
