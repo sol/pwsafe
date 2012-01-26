@@ -145,6 +145,14 @@ spec = do
         "url=http://example.com/"
       resultClipboard r `shouldBe` ["foo", "bar"]
 
+    it "copies password multiple times to clipboard, if -n is given" $ do
+      r <- pwsafe "--query example.com -n 3" $ build $ do
+        "[example.com]"
+        "user=foo"
+        "password=bar"
+        "url=http://example.com/"
+      resultClipboard r `shouldBe` ["foo", "bar", "bar", "bar"]
+
   describe "idCipher (test helper)" $ do
     it "can encrypt and decrypt" testProperty $ \s -> QC.monadicIO $ do
       r <- liftIO $ do

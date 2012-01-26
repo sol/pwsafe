@@ -14,6 +14,7 @@ data Options = Options {
     mode          :: Mode
   , databaseFile  :: FilePath
   , userName      :: Maybe String
+  , repeatCount   :: Maybe Int
   } deriving Show
 
 defaultOptions :: Options
@@ -21,6 +22,7 @@ defaultOptions  = Options {
     mode          = Help
   , databaseFile  = ""
   , userName      = Nothing
+  , repeatCount   = Nothing
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -36,6 +38,7 @@ options = [
 
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  ""
   , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") ""
+  , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard"
   ]
 
 defaultDatabaseFile :: IO String

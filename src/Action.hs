@@ -2,6 +2,7 @@
 module Action (runAction, mkEnv, add, query, list, edit, dump) where
 
 import           Prelude hiding (putStrLn, putStr)
+import           Control.Monad (replicateM_)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class (liftIO)
 import           System.IO (hPutStr, hClose)
@@ -91,8 +92,8 @@ add url_ mUser = do
           Left err  -> error err
           Right db_ -> saveDatabase db_
 
-query :: String -> ActionM ()
-query kw = do
+query :: String -> Int -> ActionM ()
+query kw n = do
   db <- openDatabase
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
@@ -102,7 +103,8 @@ query kw = do
         putStrLn url
         open url
       forM_ (entryUser x) copyToClipboard
-      copyToClipboard (entryPassword x)
+      let pw = entryPassword x
+      replicateM_ n (copyToClipboard pw)
   where
     open = liftAction1 (Config.openUrl . envConfig)
 

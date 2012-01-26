@@ -27,7 +27,7 @@ run conf cipher h args = do
   case Options.mode opts of
     Help        ->            Options.printHelp
     Add url     -> withLock $ runAction $ Action.add   url (Options.userName opts)
-    Query s     ->            runAction $ Action.query s
+    Query s     ->            runAction $ Action.query s (maybe 1 id $ Options.repeatCount opts)
     List        ->            runAction $ Action.list
     Edit        -> withLock $             Action.edit  c
     Dump        ->            runAction $ Action.dump
