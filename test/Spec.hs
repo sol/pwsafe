@@ -7,6 +7,7 @@ import qualified Options
 
 import qualified LockTest
 import qualified DatabaseSpec
+import qualified ActionSpec
 
 main :: IO ()
 main = run $ do
@@ -37,3 +38,5 @@ main = run $ do
     add LockTest.test
 
   describe "Database" DatabaseSpec.spec
+
+  describe "Action" ActionSpec.spec
