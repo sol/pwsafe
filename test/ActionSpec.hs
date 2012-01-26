@@ -114,6 +114,14 @@ spec = do
         "url=http://example.com"
       pwsafe testConfig "--add http://example.com/" c `shouldThrow` errorCall "Entry with name \"example.com\" already exists!"
 
+    it "accepts an optional --user argument" testCase $ do
+      (_, r) <- pwsafe testConfig "--add http://example.com/ --user me" ""
+      r `shouldBeBuilder` do
+        "[example.com]"
+        "user=me"
+        "password=default password"
+        "url=http://example.com/"
+
   describe "idCipher (test helper)" $ do
     it "can encrypt and decrypt" testProperty $ \s -> QC.monadicIO $ do
       r <- liftIO $ do

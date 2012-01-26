@@ -69,9 +69,9 @@ saveDatabase :: Database -> ActionM ()
 saveDatabase = encrypt . Database.render
 
 
-add :: String -> ActionM ()
-add url_ = do
-  user <- genUser
+add :: String -> Maybe String -> ActionM ()
+add url_ mUser = do
+  user <- maybe genUser return mUser
   password_ <- genPassword
   addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = password_, entryUrl = Just url_}
   copyToClipboard user

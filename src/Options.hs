@@ -13,12 +13,14 @@ data Mode = Help | Add String | Query String | List | Edit | Dump | AcquireLock 
 data Options = Options {
     mode          :: Mode
   , databaseFile  :: FilePath
+  , userName      :: Maybe String
   } deriving Show
 
 defaultOptions :: Options
 defaultOptions  = Options {
     mode          = Help
   , databaseFile  = ""
+  , userName      = Nothing
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -33,6 +35,7 @@ options = [
   , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "release write lock for database"
 
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  ""
+  , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") ""
   ]
 
 defaultDatabaseFile :: IO String
