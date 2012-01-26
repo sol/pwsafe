@@ -25,28 +25,37 @@ import           DatabaseSpec (DatabaseFile(..))
 instance (MonadIO m) => MonadIO (QC.PropertyM m) where
   liftIO = QC.run . liftIO
 
-testConfig = Config {
-  copyToClipboard  = const $ return ()
-, openUrl          = const $ return ()
-, generateUser     = return "default user"
-, generatePassword = return "default password"
-}
+mockSink :: IO ((a -> IO ()), IO [a])
+mockSink = do
+  ref <- newIORef []
+  return (modifyIORef ref . (:), reverse `fmap` readIORef ref)
 
 data PWSafeResult = PWSafeResult {
-  resultOutput   :: String
-, resultDatabase :: String
+  resultOutput    :: String
+, resultDatabase  :: String
+, resultClipboard :: [String]
 }
 
-pwsafe :: Config -> String -> String -> IO PWSafeResult
-pwsafe conf args db = do
+pwsafe :: String -> String -> IO PWSafeResult
+pwsafe args db = do
+  (clipboardSink, clipboardAccessor) <- mockSink
   c <- idCipher
   encrypt c db
   k <- K.newKnob ""
   K.withFileHandle k "knob.txt" WriteMode $ \h -> do
-    Main.run conf (const c) h (words args)
+    Main.run (conf clipboardSink) (const c) h (words args)
   db_ <- Cipher.decrypt c
   out <- B.unpack `fmap` K.getContents k
-  return (PWSafeResult out db_)
+  clipboard <- clipboardAccessor
+  return (PWSafeResult out db_ clipboard)
+  where
+    conf clipboardSink = Config {
+      copyToClipboard  = clipboardSink
+    , openUrl          = const $ return ()
+    , generateUser     = return "default user"
+    , generatePassword = return "default password"
+    }
+
 
 idCipher :: IO Cipher
 idCipher = do
@@ -65,7 +74,7 @@ main = run spec
 spec = do
   describe "list" $ do
     it "works on a config with one entry" testCase $ do
-      r <- pwsafe testConfig "--list" $ build $ do
+      r <- pwsafe "--list" $ build $ do
         "[example.com]"
         "user=foo"
         "password=bar"
@@ -73,13 +82,13 @@ spec = do
       resultOutput r `shouldBe` "  example.com\n"
 
     it "works on a config with arbitrary entries" testProperty $ \(DatabaseFile db xs) -> QC.monadicIO $ do
-      r <- liftIO $ pwsafe testConfig "--list" db
+      r <- liftIO $ pwsafe "--list" db
       let expected = unlines $ sort $ map (("  " ++) . entryName) xs
       resultOutput r `shouldBeQC` expected
 
   describe "add" $ do
     it "adds an entry to an empty config" testCase $ do
-      r <- pwsafe testConfig "--add http://example.com/" ""
+      r <- pwsafe "--add http://example.com/" ""
       resultDatabase r `shouldBeBuilder` do
         "[example.com]"
         "user=default user"
@@ -87,7 +96,7 @@ spec = do
         "url=http://example.com/"
 
     it "adds an entry to a config with one entry" testCase $ do
-      r <- pwsafe testConfig "--add http://example.com/" $ build $ do
+      r <- pwsafe "--add http://example.com/" $ build $ do
         "[foobar.com]"
         "user=foo"
         "password=bar"
@@ -102,7 +111,7 @@ spec = do
         "url=http://example.com/"
 
     it "adds an entry to an arbitrary config" testProperty $ \(DatabaseFile db xs) -> all ((/= "example.com") . entryName) xs ==> QC.monadicIO $ do
-      r <- liftIO $ pwsafe testConfig "--add http://example.com/" db
+      r <- liftIO $ pwsafe "--add http://example.com/" db
       entry <- return . build $ do
         "[example.com]"
         "user=default user"
@@ -117,15 +126,24 @@ spec = do
         "user=foo"
         "password=bar"
         "url=http://example.com"
-      pwsafe testConfig "--add http://example.com/" c `shouldThrow` errorCall "Entry with name \"example.com\" already exists!"
+      pwsafe "--add http://example.com/" c `shouldThrow` errorCall "Entry with name \"example.com\" already exists!"
 
     it "accepts an optional --user argument" testCase $ do
-      r <- pwsafe testConfig "--add http://example.com/ --user me" ""
+      r <- pwsafe "--add http://example.com/ --user me" ""
       resultDatabase r `shouldBeBuilder` do
         "[example.com]"
         "user=me"
         "password=default password"
         "url=http://example.com/"
+
+  describe "query" $ do
+    it "copies user name and password to clipboard" $ do
+      r <- pwsafe "--query example.com" $ build $ do
+        "[example.com]"
+        "user=foo"
+        "password=bar"
+        "url=http://example.com/"
+      resultClipboard r `shouldBe` ["foo", "bar"]
 
   describe "idCipher (test helper)" $ do
     it "can encrypt and decrypt" testProperty $ \s -> QC.monadicIO $ do
@@ -134,3 +152,12 @@ spec = do
         encrypt c s
         decrypt c
       r `shouldBeQC` s
+
+  describe "mockSink (test helper)" $ do
+    it "provides access to values put into the sink" $ do
+      (sink, accessor) <- mockSink
+      sink "foo"
+      sink "bar"
+      sink "baz"
+      r <- accessor
+      r `shouldBe` ["foo", "bar", "baz"]
