@@ -39,10 +39,17 @@ withTempFile action = do
 data MatchResult = None | Match String | Ambiguous [String]
   deriving (Eq, Show)
 
+
+-- |
+-- @match_ pattern list@ returns all elements from given @list@ that contain
+-- given @pattern@ (case-insensitive).
+match_ :: String -> [String] -> [String]
+match_ s l = filter (isInfixOf (toLower s) . toLower) l
+  where
+    toLower = map Char.toLower
+
 match :: String -> [String] -> MatchResult
-match s l = case filter (isInfixOf (toLower s) . toLower) l of
+match s l = case match_ s l of
   []  -> None
   [x] -> Match x
   xs   -> if s `elem` xs then Match s else Ambiguous xs
-  where
-    toLower = map Char.toLower

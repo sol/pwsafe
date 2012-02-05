@@ -86,6 +86,21 @@ spec = do
       let expected = unlines $ sort $ map (("  " ++) . entryName) xs
       resultOutput r `shouldBeQC` expected
 
+    it "optionally takes a pattern" $ do
+      r <- pwsafe "--list=bar" $ build $ do
+        "[foo]"
+        "[bar]"
+        "[baz]"
+        "[foobar]"
+        "[foobarbaz]"
+        "[FOOBARBAZ]"
+      resultOutput r `shouldBe` (build $ do
+        "  FOOBARBAZ"
+        "  bar"
+        "  foobar"
+        "  foobarbaz"
+         )
+
   describe "add" $ do
     it "adds an entry to an empty config" testCase $ do
       r <- pwsafe "--add http://example.com/" ""

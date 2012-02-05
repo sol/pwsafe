@@ -11,7 +11,7 @@ import           Control.DeepSeq (deepseq)
 import           Text.Printf
 import           Data.Foldable (forM_)
 
-import           Util (nameFromUrl, run, withTempFile)
+import           Util (nameFromUrl, run, withTempFile, match_)
 import           Database (Database, Entry(..))
 import qualified Database
 import           Cipher (Cipher)
@@ -108,10 +108,11 @@ query kw n = do
   where
     open = liftAction1 (Config.openUrl . envConfig)
 
-list :: ActionM ()
-list = do
+list :: Maybe String -> ActionM ()
+list mPattern = do
   db <- openDatabase
-  mapM_ (putStrLn . printf "  %s") $ Database.entryNames db
+  let names = Database.entryNames db
+  mapM_ (putStrLn . printf "  %s") $ maybe names (flip match_ names) mPattern
 
 edit :: Cipher -> IO ()
 edit c = withTempFile $ \fn h -> do
