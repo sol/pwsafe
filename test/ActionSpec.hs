@@ -2,10 +2,8 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
 module ActionSpec (main, spec) where
 
+import           Test.Hspec.ShouldBe
 import           Prelude hiding (catch)
-import           Test.Spec
-import           Test.Framework.Providers.HUnit
-import           Test.Framework.Providers.QuickCheck2
 import           Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QC
 import           Control.Monad.IO.Class
@@ -69,11 +67,11 @@ actual `shouldBeQC` expected = do
     fail $ "expected: " ++ show expected ++ "\n but got: " ++ show actual
 
 
-main = run spec
+main = hspecX spec
 
 spec = do
   describe "list" $ do
-    it "works on a config with one entry" testCase $ do
+    it "works on a config with one entry" $ do
       r <- pwsafe "--list" $ build $ do
         "[example.com]"
         "user=foo"
@@ -81,7 +79,7 @@ spec = do
         "url=http://example.com"
       resultOutput r `shouldBe` "  example.com\n"
 
-    it "works on a config with arbitrary entries" testProperty $ \(DatabaseFile db xs) -> QC.monadicIO $ do
+    it "works on a config with arbitrary entries" $ property $ \(DatabaseFile db xs) -> QC.monadicIO $ do
       r <- liftIO $ pwsafe "--list" db
       let expected = unlines $ sort $ map (("  " ++) . entryName) xs
       resultOutput r `shouldBeQC` expected
@@ -102,7 +100,7 @@ spec = do
          )
 
   describe "add" $ do
-    it "adds an entry to an empty config" testCase $ do
+    it "adds an entry to an empty config" $ do
       r <- pwsafe "--add http://example.com/" ""
       resultDatabase r `shouldBeBuilder` do
         "[example.com]"
@@ -110,7 +108,7 @@ spec = do
         "password=default password"
         "url=http://example.com/"
 
-    it "adds an entry to a config with one entry" testCase $ do
+    it "adds an entry to a config with one entry" $ do
       r <- pwsafe "--add http://example.com/" $ build $ do
         "[foobar.com]"
         "user=foo"
@@ -125,7 +123,7 @@ spec = do
         "password=default password"
         "url=http://example.com/"
 
-    it "adds an entry to an arbitrary config" testProperty $ \(DatabaseFile db xs) -> all ((/= "example.com") . entryName) xs ==> QC.monadicIO $ do
+    it "adds an entry to an arbitrary config" $ property $ \(DatabaseFile db xs) -> all ((/= "example.com") . entryName) xs ==> QC.monadicIO $ do
       r <- liftIO $ pwsafe "--add http://example.com/" db
       entry <- return . build $ do
         "[example.com]"
@@ -135,7 +133,7 @@ spec = do
       let expected = if null db then entry else db ++ "\n" ++ entry
       resultDatabase r `shouldBeQC` expected
 
-    it "fails on duplicate entry" testCase $ do
+    it "fails on duplicate entry" $ do
       c <- return . build $ do
         "[example.com]"
         "user=foo"
@@ -143,7 +141,7 @@ spec = do
         "url=http://example.com"
       pwsafe "--add http://example.com/" c `shouldThrow` errorCall "Entry with name \"example.com\" already exists!"
 
-    it "accepts an optional --user argument" testCase $ do
+    it "accepts an optional --user argument" $ do
       r <- pwsafe "--add http://example.com/ --user me" ""
       resultDatabase r `shouldBeBuilder` do
         "[example.com]"
@@ -169,7 +167,7 @@ spec = do
       resultClipboard r `shouldBe` ["foo", "bar", "bar", "bar"]
 
   describe "idCipher (test helper)" $ do
-    it "can encrypt and decrypt" testProperty $ \s -> QC.monadicIO $ do
+    it "can encrypt and decrypt" $ property $ \s -> QC.monadicIO $ do
       r <- liftIO $ do
         c <- idCipher
         encrypt c s

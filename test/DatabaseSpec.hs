@@ -2,10 +2,8 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
 module DatabaseSpec (main, spec, DatabaseFile(..)) where
 
-import           Test.Spec
-import           Test.Framework.Providers.HUnit
+import           Test.Hspec.ShouldBe
 import           Test.QuickCheck
-import           Test.Framework.Providers.QuickCheck2
 import           Data.List
 import           Control.Applicative hiding (empty)
 import           Data.String.Builder
@@ -48,7 +46,7 @@ x -: f = f x
 
 shouldRenderTo db builder = render db `shouldBe` build builder
 
-main = run spec
+main = hspecX spec
 
 spec = do
   describe "addEntry" $ do
@@ -60,7 +58,7 @@ spec = do
         "password=bar"
         "url=http://example.com"
 
-    it "adds an entry to a database with one entry" testCase $ do
+    it "adds an entry to a database with one entry" $ do
       parse . build $ do
         "[foobar]"
         "user=one"
@@ -77,7 +75,7 @@ spec = do
         "password=bar"
         "url=http://example.com"
 
-    it "adds an entry to an arbitrary database" testProperty $ \(DatabaseFile input _) e ->
+    it "adds an entry to an arbitrary database" $ property $ \(DatabaseFile input _) e ->
       let
         name = entryName e
         db = parse input
@@ -106,7 +104,7 @@ spec = do
         "url=http://example.com"
       lookupEntry db "example.com" `shouldBe` Right (entry "example.com" "foo" "bar" "http://example.com")
 
-    it "works on a database with arbitrary entries" testProperty $ \(DatabaseFile input xs) ->
+    it "works on a database with arbitrary entries" $ property $ \(DatabaseFile input xs) ->
       (not . null) xs ==> do
         x <- elements xs
         return $ lookupEntry (parse input) (entryName x) == Right x
