@@ -27,18 +27,18 @@ defaultOptions  = Options {
 
 options :: [OptDescr (Options -> Options)]
 options = [
-    Option []     ["help"]    (NoArg  (\  opts -> opts {mode = Help}))              "display this help and exit"
-  , Option ['a']  ["add"]     (ReqArg (\s opts -> opts { mode = Add s })   "URL")   ""
-  , Option ['q']  ["query"]   (ReqArg (\s opts -> opts { mode = Query s }) "TERM")  ""
-  , Option ['l']  ["list"]    (OptArg (\s opts -> opts { mode = List s})   "PATTERN") ""
-  , Option ['e']  ["edit"]    (NoArg  (\  opts -> opts { mode = Edit}))             ""
+    Option []     ["help"]    (NoArg  (\  opts -> opts { mode = Help }))            "display this help and exit"
+  , Option ['a']  ["add"]     (ReqArg (\s opts -> opts { mode = Add s })   "URL")   "add a new entry to the database; the password is\nalways automatically generated; the username is\ngenerated unless --user is specified"
+  , Option ['q']  ["query"]   (ReqArg (\s opts -> opts { mode = Query s }) "TERM")  "lookup a password, the term must match exactly one\nentry"
+  , Option ['l']  ["list"]    (OptArg (\s opts -> opts { mode = List s})   "TERM") "list all entries matching the given term"
+  , Option ['e']  ["edit"]    (NoArg  (\  opts -> opts { mode = Edit}))             "invoke vim to edit the database using sensible\ndefaults (no backup, no swapfile etc)"
   , Option []     ["dump"]    (NoArg  (\  opts -> opts { mode = Dump}))             "dump database to stdout"
   , Option []     ["lock"]    (NoArg  (\  opts -> opts { mode = AcquireLock}))      "acquire write lock for database"
   , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "release write lock for database"
 
-  , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored; default: ~/.pwsafe/db"
-  , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") ""
-  , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard"
+  , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored;\ndefaults to ~/.pwsafe/db"
+  , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") "specify a username to be used for a new entry;\nthis option is to be used with --add"
+  , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard;\ndefaults to 1"
   ]
 
 defaultDatabaseFile :: IO String
