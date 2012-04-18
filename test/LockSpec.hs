@@ -1,16 +1,15 @@
-module LockTest (test) where
-import           Test.Framework
-import           Test.Framework.Providers.QuickCheck2
+module LockSpec (main, spec) where
+
+import           Test.Hspec.ShouldBe
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
-
 import           Control.Monad (when)
 import           Control.Exception (finally)
 
 import qualified Lock
 
-test :: Test
-test = testProperty "acquireRelease" prop_acquireRelease
+main :: IO ()
+main = hspecX spec
 
 -- | Make sure that lock is not currently held, run action, release lock
 --
@@ -42,3 +41,9 @@ prop_acquireRelease actions = monadicIO $ do
       where
         step currentAction []                          = [(currentAction, currentAction == Acquire)]
         step currentAction l@((previousAction, _) : _) =  (currentAction, currentAction /= previousAction ) : l
+
+spec :: Specs
+spec = do
+  describe "acquire/release" $ do
+    it "return True on success, False otherwise" $ property $
+      prop_acquireRelease

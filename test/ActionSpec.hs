@@ -177,7 +177,7 @@ spec = do
   describe "mockSink (test helper)" $ do
     it "provides access to values put into the sink" $ do
       (sink, accessor) <- mockSink
-      sink "foo"
+      sink ("foo" :: String)
       sink "bar"
       sink "baz"
       r <- accessor
