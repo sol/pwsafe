@@ -36,7 +36,7 @@ options = [
   , Option []     ["lock"]    (NoArg  (\  opts -> opts { mode = AcquireLock}))      "acquire write lock for database"
   , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "release write lock for database"
 
-  , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  ""
+  , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored; default: ~/.pwsafe/db"
   , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") ""
   , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard"
   ]
