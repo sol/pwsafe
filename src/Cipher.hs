@@ -4,6 +4,7 @@ import           System.IO
 import           System.Process
 import           System.Exit
 import           System.Directory
+import           System.FilePath (takeDirectory)
 import           Control.Monad
 import           Control.DeepSeq
 import           Util
@@ -18,9 +19,9 @@ gpgCipher :: [String] -> FilePath -> Cipher
 gpgCipher additionalGpgArgs filename = Cipher enc dec
   where
     enc s = do
-      getBackupFileName filename 0 >>= renameFile filename
+      ifM (doesFileExist filename) (getBackupFileName filename 0 >>= renameFile filename) (return ())
       (Just inh, Nothing, Nothing, pid) <-
-        createProcess $ (proc "gpg" $ ["--batch", "-e", "-a", "--default-recipient-self", "--output", filename] ++ additionalGpgArgs) {std_in = CreatePipe}
+        createProcess $ (proc "gpg" $ additionalGpgArgs ++ ["--batch", "-e", "-a", "--default-recipient-self", "--output", filename]) {std_in = CreatePipe}
       hPutStr inh s
       hClose inh
       e <- waitForProcess pid
@@ -33,7 +34,11 @@ gpgCipher additionalGpgArgs filename = Cipher enc dec
             backupFile = printf "%s.old.%d" baseName n
 
     dec = do
-      (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" ["-d", filename]) {std_out = CreatePipe}
+      createDirectoryIfMissing True (takeDirectory filename)
+      ifM (doesFileExist filename) doDecrypt (return "")
+
+    doDecrypt = do
+      (Nothing, Just outh, Nothing, pid) <- createProcess $ (proc "gpg" $ additionalGpgArgs ++ ["-d", filename]) {std_out = CreatePipe}
       output <- hGetContents outh
       output `deepseq` hClose outh
       e <- waitForProcess pid

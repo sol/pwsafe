@@ -6,6 +6,7 @@ import qualified OptionsSpec
 import qualified LockSpec
 import qualified DatabaseSpec
 import qualified ActionSpec
+import qualified CipherSpec
 
 main :: IO ()
 main = hspecX $ do
@@ -13,3 +14,4 @@ main = hspecX $ do
   describe "Options"  OptionsSpec.spec
   describe "Database" DatabaseSpec.spec
   describe "Action"   ActionSpec.spec
+  describe "Cipher"   CipherSpec.spec
