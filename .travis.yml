@@ -2,5 +2,5 @@ language: haskell
 
 install:
     - cabal update
-    - cabal install hspec-shouldbe stringbuilder bytestring knob
+    - cabal install hspec-shouldbe stringbuilder knob
     - cabal install
