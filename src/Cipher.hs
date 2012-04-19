@@ -14,13 +14,13 @@ data Cipher = Cipher {
 , decrypt :: IO String
 }
 
-gpgCipher :: FilePath -> Cipher
-gpgCipher filename = Cipher enc dec
+gpgCipher :: [String] -> FilePath -> Cipher
+gpgCipher additionalGpgArgs filename = Cipher enc dec
   where
     enc s = do
       getBackupFileName filename 0 >>= renameFile filename
       (Just inh, Nothing, Nothing, pid) <-
-        createProcess $ (proc "gpg" ["--batch", "-e", "-a", "--default-recipient-self", "--output", filename]) {std_in = CreatePipe}
+        createProcess $ (proc "gpg" $ ["--batch", "-e", "-a", "--default-recipient-self", "--output", filename] ++ additionalGpgArgs) {std_in = CreatePipe}
       hPutStr inh s
       hClose inh
       e <- waitForProcess pid

@@ -17,7 +17,7 @@ import qualified Cipher
 main :: IO ()
 main = do
   args <- getArgs
-  run defaultConfig Cipher.gpgCipher stdout args
+  run defaultConfig (Cipher.gpgCipher []) stdout args
 
 run :: Config -> (FilePath -> Cipher) -> Handle -> [String] -> IO ()
 run conf cipher h args = do
