@@ -1,10 +1,12 @@
 module CipherSpec (main, spec) where
 
 import           Test.Hspec.ShouldBe
-import qualified Cipher
-import           System.Directory
-import           Control.Exception (catch)
+
 import           Prelude hiding (catch)
+import           Control.Exception (catch)
+import           System.Directory
+
+import qualified Cipher
 
 main :: IO ()
 main = hspecX spec
@@ -13,7 +15,7 @@ testDbFilename :: String
 testDbFilename = "./test.db"
 
 testCipher :: Cipher.Cipher
-testCipher = (Cipher.gpgCipher ["--homedir", "test/data"]) testDbFilename
+testCipher = (Cipher.gpgCipher ["--homedir", "test/dot-gnupg"]) testDbFilename
 
 spec :: Specs
 spec = do
@@ -29,7 +31,7 @@ spec = do
       Cipher.encrypt testCipher "foobar"
       Cipher.decrypt testCipher `shouldReturn` "foobar"
       removeFile testDbFilename
-      removeFile "test/data/random_seed"
+      removeFile "test/dot-gnupg/random_seed"
 
 handlerUnit :: IOError -> IO ()
 handlerUnit = const $ return ()
