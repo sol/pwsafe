@@ -36,12 +36,11 @@ http://www.niftyservice.com. Then you would proceed like this:
 
  1. Point your web browser to http://www.niftyservice.com and navigate to the sign-up
     page where you have to enter your new login credentials like username and
-    password. Usually, these pages have at least three input fields:
+    password. Don't enter anything yet.
+    Usually, these pages have at least three input fields:
      * enter your desired username
      * enter your desired password
      * repeat your desired password
-
-    Don't enter anything yet.
  2. In a terminal, call pwsafe like this:
 
         $ pwsafe -a http://www.niftyservice.com
@@ -49,17 +48,17 @@ http://www.niftyservice.com. Then you would proceed like this:
         user: "Some Body <some.body@some.where>"
         Waiting for one selection request.
 
- 3. pwsafe has generated a random username and password for you, and added it
+    pwsafe has generated a random username and password for you, and added it
     to the password database. At this point, pwsafe blocks and waits for a
     paste request. In X, you do that with your middle mouse button.
 
- 4. In your web browser, middle-click on the "username" field. pwsafe pastes the
+ 3. In your web browser, middle-click on the "username" field. pwsafe pastes the
     username it has generated for you.
 
- 5. pwsafe now waits for you to paste the password two times. Middle-click on
+ 4. pwsafe now waits for you to paste the password two times. Middle-click on
     the "password" field, then again in the "repeat password" field.
 
- 6. pwsafe exits, because it's job is done for now. Fill out the rest of the
+ 5. pwsafe exits, because it's job is done for now. Fill out the rest of the
     fields in the web form to your liking.
 
 
@@ -79,17 +78,17 @@ If you want to log in to niftyservice again, proceed as follows.
     you have two entries, one for niftyservice and one for niftycatpictures,
     pwsafe exits with an error. Make the term long enough to be unambiguous.
 
- 2. At this point, pwsafe has opened the website that corresponds to the entry
+    At this point, pwsafe has opened the website that corresponds to the entry
     in your default web browser. To configure your default web browser, consult
     the documentation of xdg-open and update-alternatives.
 
- 3. Switch to your browser window and navigate to the login page.
+ 2. Switch to your browser window and navigate to the login page.
 
- 4. Middle-click on the "username" field.
+ 3. Middle-click on the "username" field.
 
- 5. Middle-click on the "password" field.
+ 4. Middle-click on the "password" field.
 
- 6. pwsafe exits, and you can proceed with the login.
+ 5. pwsafe exits, and you can proceed with the login.
 
 
 Changing or deleting an entry in the database
