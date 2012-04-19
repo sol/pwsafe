@@ -11,7 +11,7 @@ import           Data.String.Builder
 import           Data.List (sort)
 
 import           Database (entryName)
-import qualified Main
+import qualified Run
 import           Data.IORef
 import           Cipher
 import qualified Data.Knob as K
@@ -41,7 +41,7 @@ pwsafe args db = do
   encrypt c db
   k <- K.newKnob ""
   K.withFileHandle k "knob.txt" WriteMode $ \h -> do
-    Main.run (conf clipboardSink) (const c) h (words args)
+    Run.run (conf clipboardSink) (const c) h (words args)
   db_ <- Cipher.decrypt c
   out <- B.unpack `fmap` K.getContents k
   clipboard <- clipboardAccessor
