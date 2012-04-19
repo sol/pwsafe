@@ -98,7 +98,7 @@ pwsafe does not have commands to edit entries in your database. Instead, it
 fires up vim with the complete decrypted database for you to edit it. pwsafe
 decrypts your database to a temporary file, loads this file in vim with
 sensible defaults (no backupfile, no vimfile, no swapfile, etc). Once you are
-done editing, pwsafe decrypts the file again and calls `shred` to securely
+done editing, pwsafe encrypts the file again and calls `shred` to securely
 delete the decrypted copy. If you are using an SSD, shred is useless, so you
 better be using hardware encryption.
 
