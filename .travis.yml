@@ -2,6 +2,6 @@ language: haskell
 
 install:
     - cabal update
-    - cabal install hspec-shouldbe stringbuilder knob
+    - cabal install hspec-shouldbe stringbuilder knob hspec-discover
     - git clone https://github.com/sol/config-ng && cd config-ng && cabal install && cd ..
     - cabal install

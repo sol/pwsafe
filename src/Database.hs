@@ -14,7 +14,7 @@ import           Util (match, MatchResult(..))
 data Entry = Entry {
   entryName     :: String
 , entryUser     :: Maybe String
-, entryPassword :: String
+, entryPassword :: Maybe String
 , entryUrl      :: Maybe String
 } deriving (Eq, Show)
 
@@ -30,17 +30,16 @@ lookupEntry :: Database -> String -> Either String Entry
 lookupEntry db s = case match s $ entryNames db of
   None        -> Left "no match"
   Ambiguous l -> Left $ printf "ambiguous, could refer to:\n  %s" $ intercalate "\n  " l
-  Match name  -> go
+  Match name  -> entry
     where
-      go = do
-        password <- get "password"
-        let url = lookup "url"
-        return Entry {entryName = name, entryUser = lookup "user", entryPassword = password, entryUrl = url}
+      entry = do
+        return Entry {
+            entryName = name
+          , entryUser = lookup "user"
+          , entryPassword = lookup "password"
+          , entryUrl = lookup "url"
+          }
       lookup k = Config.lookup name k (config db)
-      get k = maybe
-        (Left $ "config error: section [" ++ name ++ "] dose not define required option " ++ show k ++ "!")
-        Right
-        (lookup k)
 
 hasEntry :: String -> Database -> Bool
 hasEntry name = Config.hasSection name . config
@@ -59,7 +58,7 @@ addEntry db entry =
 insertEntry :: Entry -> Config -> Config
 insertEntry entry =
     mInsert "user" user
-  . insert "password" password
+  . mInsert "password" password
   . mInsert "url" url
   where
     insert = Config.insert $ entryName entry

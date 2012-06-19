@@ -74,7 +74,7 @@ add :: String -> Maybe String -> ActionM ()
 add url_ mUser = do
   user <- maybe genUser return mUser
   password_ <- genPassword
-  addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = password_, entryUrl = Just url_}
+  addEntry $ Entry {entryName = nameFromUrl url_, entryUser = Just user, entryPassword = Just password_, entryUrl = Just url_}
   copyToClipboard user
   copyToClipboard password_
   copyToClipboard password_
@@ -102,9 +102,10 @@ query kw n = do
       forM_ (entryUrl x) $ \url -> do
         putStrLn url
         open url
-      forM_ (entryUser x) copyToClipboard
-      let pw = entryPassword x
-      replicateM_ n (copyToClipboard pw)
+      forM_ (entryUser x)
+        copyToClipboard
+      forM_ (entryPassword x) $
+        replicateM_ n . copyToClipboard
   where
     open = liftAction1 (Config.openUrl . envConfig)
 

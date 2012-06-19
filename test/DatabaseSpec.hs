@@ -16,7 +16,7 @@ instance Arbitrary Entry where
     user <- genMaybe shortWord
     password <- shortWord
     url <- genMaybe shortWord
-    return $ Entry name user password url
+    return $ Entry name user (Just password) url
     where
       shortWord = vectorOf 3 $ choose ('a', 'z')
 
@@ -39,7 +39,7 @@ instance Arbitrary DatabaseFile where
 addEntry :: Entry -> Database -> Database
 addEntry e db = either error id $ Database.addEntry db e
 
-entry name user password url = Database.Entry name (Just user) password (Just url)
+entry name user password url = Database.Entry name (Just user) (Just password) (Just url)
 
 (-:) :: a -> (a -> b) -> b
 x -: f = f x
@@ -84,13 +84,19 @@ spec = do
         (not $ hasEntry name db) ==> (renderedDb ++) (render $ addEntry e empty) == (render $ addEntry e db)
 
     it "accepts Nothing for user" $ do
-      addEntry (Entry "example.com" Nothing "bar" (Just "http://example.com")) empty `shouldRenderTo` do
+      addEntry (Entry "example.com" Nothing (Just "bar") (Just "http://example.com")) empty `shouldRenderTo` do
         "[example.com]"
         "password=bar"
         "url=http://example.com"
 
+    it "accepts Nothing for password" $ do
+      addEntry (Entry "example.com" (Just "foo") Nothing (Just "http://example.com")) empty `shouldRenderTo` do
+        "[example.com]"
+        "user=foo"
+        "url=http://example.com"
+
     it "accepts Nothing for url" $ do
-      addEntry (Entry "example.com" (Just "foo") "bar" Nothing) empty `shouldRenderTo` do
+      addEntry (Entry "example.com" (Just "foo") (Just "bar") Nothing) empty `shouldRenderTo` do
         "[example.com]"
         "user=foo"
         "password=bar"
@@ -104,7 +110,8 @@ spec = do
         "url=http://example.com"
       lookupEntry db "example.com" `shouldBe` Right (entry "example.com" "foo" "bar" "http://example.com")
 
-    it "works on a database with arbitrary entries" $ property $ \(DatabaseFile input xs) ->
-      (not . null) xs ==> do
-        x <- elements xs
-        return $ lookupEntry (parse input) (entryName x) == Right x
+    it "works on a database with arbitrary entries" $
+      property $ \(DatabaseFile input xs) ->
+        (not . null) xs ==> do
+          x <- elements xs
+          return $ lookupEntry (parse input) (entryName x) == Right x
