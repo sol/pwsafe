@@ -9,7 +9,7 @@ import           System.Directory
 import qualified Cipher
 
 main :: IO ()
-main = hspecX spec
+main = hspec spec
 
 testDbFilename :: String
 testDbFilename = "./test.db"
@@ -17,7 +17,7 @@ testDbFilename = "./test.db"
 testCipher :: Cipher.Cipher
 testCipher = (Cipher.gpgCipher ["--homedir", "test/dot-gnupg"]) testDbFilename
 
-spec :: Specs
+spec :: Spec
 spec = do
 
   describe "gpgCipher decrypt" $ do

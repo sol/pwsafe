@@ -46,7 +46,7 @@ x -: f = f x
 
 shouldRenderTo db builder = render db `shouldBe` build builder
 
-main = hspecX spec
+main = hspec spec
 
 spec = do
   describe "addEntry" $ do

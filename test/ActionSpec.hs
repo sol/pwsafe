@@ -67,7 +67,7 @@ actual `shouldBeQC` expected = do
     fail $ "expected: " ++ show expected ++ "\n but got: " ++ show actual
 
 
-main = hspecX spec
+main = hspec spec
 
 spec = do
   describe "list" $ do

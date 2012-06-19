@@ -9,7 +9,7 @@ import           Control.Exception (finally)
 import qualified Lock
 
 main :: IO ()
-main = hspecX spec
+main = hspec spec
 
 -- | Make sure that lock is not currently held, run action, release lock
 --
@@ -42,7 +42,7 @@ prop_acquireRelease actions = monadicIO $ do
         step currentAction []                          = [(currentAction, currentAction == Acquire)]
         step currentAction l@((previousAction, _) : _) =  (currentAction, currentAction /= previousAction ) : l
 
-spec :: Specs
+spec :: Spec
 spec = do
   describe "acquire/release" $ do
     it "return True on success, False otherwise" $ property $

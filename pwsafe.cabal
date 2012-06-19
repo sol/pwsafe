@@ -42,3 +42,4 @@ test-suite spec
     , QuickCheck
     , bytestring
     , knob
+    , hspec-discover
