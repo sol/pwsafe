@@ -166,6 +166,14 @@ spec = do
         "url=http://example.com/"
       resultClipboard r `shouldBe` ["foo", "bar", "bar", "bar"]
 
+    it "copies only password to clipboard when given --password-only" $ do
+      r <- pwsafe "--query example.com --password-only" $ build $ do
+        "[example.com]"
+        "user=foo"
+        "password=bar"
+        "url=http://example.com/"
+      resultClipboard r `shouldBe` ["bar"]
+
   describe "idCipher (test helper)" $ do
     it "can encrypt and decrypt" $ property $ \s -> QC.monadicIO $ do
       r <- liftIO $ do

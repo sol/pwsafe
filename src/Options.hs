@@ -15,6 +15,7 @@ data Options = Options {
   , databaseFile  :: FilePath
   , userName      :: Maybe String
   , repeatCount   :: Maybe Int
+  , passwordOnly  :: Bool
   } deriving Show
 
 defaultOptions :: Options
@@ -23,6 +24,7 @@ defaultOptions  = Options {
   , databaseFile  = ""
   , userName      = Nothing
   , repeatCount   = Nothing
+  , passwordOnly  = False
   }
 
 options :: [OptDescr (Options -> Options)]
@@ -39,6 +41,8 @@ options = [
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored;\ndefaults to ~/.pwsafe/db"
   , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") "specify a username to be used for a new entry;\nthis option is to be used with --add"
   , Option ['n']  []          (ReqArg (\s opts -> opts { repeatCount = (Just . read) s }) "NUMBER") "copy password n times to clipboard;\ndefaults to 1"
+  , Option []     ["password-only"]
+                              (NoArg  (\  opts -> opts { passwordOnly = True}))       "only copy password to clipboard"
   ]
 
 defaultDatabaseFile :: IO String

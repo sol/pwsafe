@@ -2,7 +2,7 @@
 module Action (runAction, mkEnv, add, query, list, edit, dump) where
 
 import           Prelude hiding (putStrLn, putStr)
-import           Control.Monad (replicateM_)
+import           Control.Monad (replicateM_, unless)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class (liftIO)
 import           System.IO (hPutStr, hClose)
@@ -92,18 +92,18 @@ add url_ mUser = do
           Left err  -> error err
           Right db_ -> saveDatabase db_
 
-query :: String -> Int -> ActionM ()
-query kw n = do
+query :: String -> Int -> Bool -> ActionM ()
+query kw n passwordOnly = do
   db <- openDatabase
   case Database.lookupEntry db kw of
     Left err -> putStrLn err
     Right x  -> x `deepseq` do -- force pending exceptions early..
-
-      forM_ (entryUrl x) $ \url -> do
-        putStrLn url
-        open url
-      forM_ (entryUser x)
-        copyToClipboard
+      unless passwordOnly $ do
+        forM_ (entryUrl x) $ \url -> do
+          putStrLn url
+          open url
+        forM_ (entryUser x)
+          copyToClipboard
       forM_ (entryPassword x) $
         replicateM_ n . copyToClipboard
   where
