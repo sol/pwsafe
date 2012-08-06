@@ -1,6 +1,6 @@
 module LockSpec (main, spec) where
 
-import           Test.Hspec.ShouldBe
+import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 import           Control.Monad (when)

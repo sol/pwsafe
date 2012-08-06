@@ -1,6 +1,6 @@
 module OptionsSpec (main, spec) where
 
-import           Test.Hspec.ShouldBe
+import           Test.Hspec
 
 import           Options (Mode(..))
 import qualified Options

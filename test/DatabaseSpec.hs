@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
 module DatabaseSpec (main, spec, DatabaseFile(..)) where
 
-import           Test.Hspec.ShouldBe
+import           Test.Hspec
 import           Test.QuickCheck
 import           Data.List
 import           Control.Applicative hiding (empty)

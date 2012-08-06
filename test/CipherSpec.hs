@@ -1,6 +1,6 @@
 module CipherSpec (main, spec) where
 
-import           Test.Hspec.ShouldBe
+import           Test.Hspec
 
 import           Prelude hiding (catch)
 import           Control.Exception (catch)
