@@ -1,6 +1,4 @@
 language: haskell
 
-install:
-    - cabal update
+before_install:
     - git clone https://github.com/sol/config-ng && cd config-ng && cabal install && cd ..
-    - cabal install --enable-tests
