@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module DatabaseSpec (main, spec, DatabaseFile(..)) where
 
 import           Test.Hspec
@@ -26,6 +26,7 @@ instance Arbitrary Entry where
 data DatabaseFile = DatabaseFile String [Entry]
   deriving Show
 
+dbFromList :: [Entry] -> DatabaseFile
 dbFromList xs = DatabaseFile (render $ foldr addEntry empty xs) xs
 
 instance Arbitrary DatabaseFile where
@@ -39,15 +40,19 @@ instance Arbitrary DatabaseFile where
 addEntry :: Entry -> Database -> Database
 addEntry e db = either error id $ Database.addEntry db e
 
+entry :: String -> String -> String -> String -> Entry
 entry name user password url = Database.Entry name (Just user) (Just password) (Just url)
 
 (-:) :: a -> (a -> b) -> b
 x -: f = f x
 
+shouldRenderTo :: Database -> Builder -> Expectation
 shouldRenderTo db builder = render db `shouldBe` build builder
 
+main :: IO ()
 main = hspec spec
 
+spec :: Spec
 spec = do
   describe "addEntry" $ do
 

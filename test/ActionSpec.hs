@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_GHC -fno-warn-unused-do-bind -fno-warn-missing-signatures -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module ActionSpec (main, spec) where
 
 import           Test.Hspec
@@ -60,15 +60,19 @@ idCipher = do
   ref <- newIORef ""
   return $ Cipher (writeIORef ref) (readIORef ref)
 
+shouldBeBuilder :: String -> Builder -> Expectation
 shouldBeBuilder a b = a `shouldBe` build b
 
+shouldBeQC :: (Eq a, Show a) => a -> a -> QC.PropertyM IO ()
 actual `shouldBeQC` expected = do
   if actual == expected then return () else do
     fail $ "expected: " ++ show expected ++ "\n but got: " ++ show actual
 
 
+main :: IO ()
 main = hspec spec
 
+spec :: Spec
 spec = do
   describe "list" $ do
     it "works on a config with one entry" $ do
