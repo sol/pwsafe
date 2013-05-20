@@ -3,7 +3,6 @@
 module ActionSpec (main, spec) where
 
 import           Test.Hspec
-import           Prelude hiding (catch)
 import           Test.QuickCheck
 import qualified Test.QuickCheck.Monadic as QC
 import           Control.Monad.IO.Class

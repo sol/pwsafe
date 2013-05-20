@@ -2,8 +2,7 @@ module CipherSpec (main, spec) where
 
 import           Test.Hspec
 
-import           Prelude hiding (catch)
-import           Control.Exception (catch)
+import qualified Control.Exception as E
 import           System.Directory
 
 import qualified Cipher
@@ -22,12 +21,12 @@ spec = do
 
   describe "gpgCipher decrypt" $ do
     it "returns the empty string when the database does not exist" $ do
-      removeFile testDbFilename `catch` handlerUnit
+      removeFile testDbFilename `E.catch` handlerUnit
       (Cipher.decrypt testCipher) `shouldReturn` ""
 
   describe "gpgCipher" $ do
     it "encrypt followed by decrypt works when the database does not exist" $ do
-      removeFile testDbFilename `catch` handlerUnit
+      removeFile testDbFilename `E.catch` handlerUnit
       Cipher.encrypt testCipher "foobar"
       Cipher.decrypt testCipher `shouldReturn` "foobar"
       removeFile testDbFilename
