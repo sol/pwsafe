@@ -142,3 +142,39 @@ Command line options
       -n NUMBER                   copy password n times to clipboard;
                                   defaults to 1
                  --password-only  only copy password to clipboard
+
+Development
+===========
+
+pwsafe is primarily here to serve my needs.  If we can extend it in a way that
+makes it more useful for you and still serves my needs, even better!
+
+Make sure that the test suite passes with your changes and add tests for new
+code.
+
+### Running the tests
+
+First make sure that you have the latest version of `cabal-install`:
+
+    $ cabal update && cabal install cabal-install
+
+Make sure that `~/.cabal/bin/` is on your `PATH`.
+
+Run the tests:
+
+    $ cabal install --enable-tests --dependencies-only
+    $ cabal test
+
+### Running the tests during development
+
+During development you want to run the test with GHCi.  This is much faster and
+provides better feedback:
+
+    $ chmod og-w .ghci
+    $ ghci test/Spec.hs
+    *Main> :main
+
+After making changes, run:
+
+    *Main> :reload
+    *Main> :main
