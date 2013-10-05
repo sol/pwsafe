@@ -123,22 +123,22 @@ Command line options
 
     Usage: pwsafe [OPTION]...
 
-                 --help         display this help and exit
-      -a URL     --add=URL      add a new entry to the database; the password is
-                                always automatically generated; the username is
-                                generated unless --user is specified
-      -q TERM    --query=TERM   lookup a password, the term must match exactly one
-                                entry
-      -l[TERM]   --list[=TERM]  list all entries matching the given term
-      -e         --edit         invoke vim to edit the database using sensible
-                                defaults (no backup, no swapfile etc)
-                 --dump         dump database to stdout
-                 --lock         acquire write lock for database
-                 --unlock       release write lock for database
-                 --dbfile=FILE  file where passwords are stored;
-                                defaults to ~/.pwsafe/db
-                 --user=USER    specify a username to be used for a new entry;
-                                this option is to be used with --add
-      -n NUMBER                 copy password n times to clipboard;
-                                defaults to 1
+                 --help           display this help and exit
+      -a URL     --add=URL        add a new entry to the database; the password is
+                                  always automatically generated; the username is
+                                  generated unless --user is specified
+      -q TERM    --query=TERM     lookup a password, the term must match exactly one
+                                  entry
+      -l[TERM]   --list[=TERM]    list all entries matching the given term
+      -e         --edit           invoke vim to edit the database using sensible
+                                  defaults (no backup, no swapfile etc)
+                 --dump           dump database to stdout
+                 --lock           acquire write lock for database
+                 --unlock         release write lock for database
+                 --dbfile=FILE    file where passwords are stored;
+                                  defaults to ~/.pwsafe/db
+                 --user=USER      specify a username to be used for a new entry;
+                                  this option is to be used with --add
+      -n NUMBER                   copy password n times to clipboard;
+                                  defaults to 1
                  --password-only  only copy password to clipboard
