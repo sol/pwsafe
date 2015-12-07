@@ -20,7 +20,7 @@ import           Config (Config)
 import qualified Config
 
 newtype ActionM a = ActionM (ReaderT Env IO a)
-  deriving (Monad, Functor)
+  deriving (Functor, Applicative, Monad)
 
 runAction :: Env -> ActionM a -> IO a
 runAction env (ActionM a) = runReaderT a env

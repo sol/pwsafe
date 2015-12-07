@@ -19,9 +19,6 @@ import           System.IO
 import           Config
 import           DatabaseSpec (DatabaseFile(..))
 
-instance (MonadIO m) => MonadIO (QC.PropertyM m) where
-  liftIO = QC.run . liftIO
-
 mockSink :: IO ((a -> IO ()), IO [a])
 mockSink = do
   ref <- newIORef []

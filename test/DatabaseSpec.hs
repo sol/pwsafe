@@ -5,7 +5,6 @@ module DatabaseSpec (main, spec, DatabaseFile(..)) where
 import           Test.Hspec
 import           Test.QuickCheck
 import           Data.List
-import           Control.Applicative hiding (empty)
 import           Data.String.Builder
 import           Database hiding (addEntry)
 import qualified Database

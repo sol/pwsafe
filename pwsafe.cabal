@@ -14,11 +14,11 @@ executable pwsafe
   hs-source-dirs:
       src
   build-depends:
-      base
+      base >= 4.8
     , transformers
     , process
     , filepath
-    , network
+    , network-uri
     , directory
     , deepseq
     , unix
