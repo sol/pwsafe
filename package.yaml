@@ -1,0 +1,38 @@
+name:             pwsafe
+version:          0.0.0
+license:          MIT
+copyright:        (c) 2011-2013 Simon Hengel
+author:           Simon Hengel <sol@typeful.net>
+maintainer:       Simon Hengel <sol@typeful.net>
+
+ghc-options: -Wall
+
+executables:
+  pwsafe:
+    main: Main.hs
+    source-dirs:
+      - src
+    dependencies:
+      - base >= 4.8
+      - transformers
+      - process
+      - filepath
+      - network-uri
+      - directory
+      - deepseq
+      - unix
+      - config-ng
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - src
+      - test
+    dependencies:
+      - base
+      - hspec >= 1.3
+      - stringbuilder
+      - QuickCheck
+      - bytestring
+      - knob
