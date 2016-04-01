@@ -7,21 +7,22 @@ maintainer:       Simon Hengel <sol@typeful.net>
 
 ghc-options: -Wall
 
+dependencies:
+  - base >= 4.8
+  - transformers
+  - process
+  - filepath
+  - network-uri
+  - directory
+  - deepseq
+  - config-ng
+  - filelock
+
 executables:
   pwsafe:
     main: Main.hs
     source-dirs:
       - src
-    dependencies:
-      - base >= 4.8
-      - transformers
-      - process
-      - filepath
-      - network-uri
-      - directory
-      - deepseq
-      - unix
-      - config-ng
 
 tests:
   spec:
@@ -36,3 +37,4 @@ tests:
       - QuickCheck
       - bytestring
       - knob
+      - temporary

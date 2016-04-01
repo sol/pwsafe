@@ -1,36 +1,29 @@
-module CipherSpec (main, spec) where
+module CipherSpec (spec) where
 
 import           Test.Hspec
 
-import qualified Control.Exception as E
-import           System.Directory
+import           System.IO.Temp
+import           System.FilePath
+import           System.Process
 
 import qualified Cipher
 
-main :: IO ()
-main = hspec spec
+testCipher :: FilePath -> Cipher.Cipher
+testCipher dir = (Cipher.gpgCipher ["--homedir", dir </> "dot-gnupg"]) (dir </> "test.db")
 
-testDbFilename :: String
-testDbFilename = "./test.db"
-
-testCipher :: Cipher.Cipher
-testCipher = (Cipher.gpgCipher ["--homedir", "test/dot-gnupg"]) testDbFilename
+withTestCipher :: (Cipher.Cipher -> IO a) -> IO a
+withTestCipher action = withSystemTempDirectory "hspec" $ \dir -> do
+  callProcess "cp" ["-r", "test/dot-gnupg/", dir]
+  action (testCipher dir)
 
 spec :: Spec
 spec = do
+  around withTestCipher $ do
+    describe "decrypt" $ do
+      it "is inverse to encrypt" $ \cipher -> do
+        Cipher.encrypt cipher "foobar"
+        Cipher.decrypt cipher `shouldReturn` "foobar"
 
-  describe "gpgCipher decrypt" $ do
-    it "returns the empty string when the database does not exist" $ do
-      removeFile testDbFilename `E.catch` handlerUnit
-      (Cipher.decrypt testCipher) `shouldReturn` ""
-
-  describe "gpgCipher" $ do
-    it "encrypt followed by decrypt works when the database does not exist" $ do
-      removeFile testDbFilename `E.catch` handlerUnit
-      Cipher.encrypt testCipher "foobar"
-      Cipher.decrypt testCipher `shouldReturn` "foobar"
-      removeFile testDbFilename
-      removeFile "test/dot-gnupg/random_seed"
-
-handlerUnit :: IOError -> IO ()
-handlerUnit = const $ return ()
+      context "when the database does not exist" $ do
+        it "returns the empty string" $ \cipher -> do
+          Cipher.decrypt cipher `shouldReturn` ""

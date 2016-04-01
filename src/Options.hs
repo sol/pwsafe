@@ -7,7 +7,7 @@ import System.FilePath (joinPath)
 import System.Console.GetOpt
 import Text.Printf (printf)
 
-data Mode = Help | Add String | Query String | List (Maybe String) | Edit | Dump | AcquireLock | ReleaseLock
+data Mode = Help | Add String | Query String | List (Maybe String) | Edit | Dump
   deriving (Eq, Show)
 
 data Options = Options {
@@ -35,8 +35,6 @@ options = [
   , Option ['l']  ["list"]    (OptArg (\s opts -> opts { mode = List s})   "TERM") "list all entries matching the given term"
   , Option ['e']  ["edit"]    (NoArg  (\  opts -> opts { mode = Edit}))             "invoke vim to edit the database using sensible\ndefaults (no backup, no swapfile etc)"
   , Option []     ["dump"]    (NoArg  (\  opts -> opts { mode = Dump}))             "dump database to stdout"
-  , Option []     ["lock"]    (NoArg  (\  opts -> opts { mode = AcquireLock}))      "acquire write lock for database"
-  , Option []     ["unlock"]  (NoArg  (\  opts -> opts { mode = ReleaseLock}))      "release write lock for database"
 
   , Option []     ["dbfile"]  (ReqArg (\s opts -> opts { databaseFile = s }) "FILE")  "file where passwords are stored;\ndefaults to ~/.pwsafe/db"
   , Option []     ["user"]    (ReqArg (\s opts -> opts { userName = Just s }) "USER") "specify a username to be used for a new entry;\nthis option is to be used with --add"
